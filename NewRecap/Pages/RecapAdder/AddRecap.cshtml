@@ -1,0 +1,336 @@
+﻿@page
+@model NewRecap.Pages.RecapAdder.AddRecapModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Add Recap</label>
+    </div>
+</div>
+<form method="post" enctype="multipart/form-data">
+
+    <!--Employee Checkboxs-->
+    <div class="row my-2">
+        <div class="col-4">
+            <label class="form-label" id="LabelText">Employees Involved:</label>
+        </div>
+        <div class="col-12">
+            @foreach (var g in Model.Employees)
+            {
+                <input type="checkbox" value="@g.EmployeeID" class="form-check-input" name="SelectedEmployeeIDs" checked="@g.IsSelected" />
+                <label class="form-label" id="LabelText">@g.EmployeeFName</label>
+                <label class="form-label" id="LabelText">@g.EmployeeLName</label>
+            }
+        </div>
+    </div>
+    <!--End of Employee Checkboxs-->
+
+    <!--Workorder Textbox-->
+    <div class="row my-2">
+        <div class="col-4">
+            <label asp-for="NewRecap.RecapWorkorderNumber" class="form-label" id="LabelText">Workorder Number:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="NewRecap.RecapWorkorderNumber" type="text" class="form-control" />
+            <span asp-validation-for="NewRecap.RecapWorkorderNumber" class="text-danger"></span>
+        </div>
+    </div>
+    <!--Workorder Textbox-->
+
+    <!--Recap Date Textbox-->
+    <div class="col-4">
+        <label asp-for="NewRecap.RecapDate" class="form-label" id="LabelText">Recap Date:</label>
+    </div>
+    <div class="col-12">
+        <input asp-for="NewRecap.RecapDate" type="date" class="form-control" />
+        <span asp-validation-for="NewRecap.RecapDate" class="text-danger"></span>
+    </div>
+    <!--End of Recap Date Textbox-->
+
+    <!--Recap Description Textbox-->
+    <div class="col-4">
+        <label asp-for="NewRecap.RecapDescription" class="form-label" id="LabelText">Recap Description:</label>
+    </div>
+    <div class="col-12">
+        <textarea asp-for="NewRecap.RecapDescription" type="text" class="form-control" rows="5"></textarea>
+        <span asp-validation-for="NewRecap.RecapDescription" class="text-danger"></span>
+    </div>
+    <!--End of Recap Description Textbox-->
+
+    <!--State Textbox-->
+    <div class="col-4">
+        <label asp-for="NewRecap.RecapState" class="form-label" id="LabelText">State:</label>
+    </div>
+    <div class="col-12">
+        <input asp-for="NewRecap.RecapState" type="text" class="form-control" />
+        <span asp-validation-for="NewRecap.RecapState" class="text-danger"></span>
+    </div>
+    <!--End of State Textbox-->
+
+    <!--City Textbox-->
+    <div class="col-4">
+        <label asp-for="NewRecap.RecapCity" class="form-label" id="LabelText">City:</label>
+    </div>
+    <div class="col-12">
+        <input asp-for="NewRecap.RecapCity" type="text" class="form-control" />
+        <span asp-validation-for="NewRecap.RecapCity" class="text-danger"></span>
+    </div>
+    <!--End of City Textbox-->
+    
+    <!--Vehicle DropDown-->
+    <div class="col-6 mt-2">
+        <label asp-for="NewRecap" class="form-label" id="LabelText">Vehicle Used:</label>
+    </div>
+    <div class="col-12">
+        <select asp-for="NewRecap.VehicleID" asp-items="Model.Vehicles" class="form-control">
+            <option value="">---Select Vehicle---</option>
+        </select>
+        <span asp-validation-for="NewRecap.VehicleID" class="text-danger"></span>
+    </div>
+    <!--End of Vehicle DropDown-->
+
+    <!-- Work Segments -->
+    <div class="col-6 mt-2">
+        <label class="form-label" id="LabelText">Work Segments:</label>
+
+        <div id="segmentsWork" class="d-flex flex-column">
+            @for (var i = 0; i < Model.NewRecap.WorkSegments.Count; i++)
+            {
+                <div class="card p-2" data-seg>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-6">
+                            <label class="form-label">Work Start</label>
+                            <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.WorkSegments[@i].WorkStartDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].WorkStartDate" class="text-danger"></span>
+
+                                <input asp-for="NewRecap.WorkSegments[@i].WorkStart" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].WorkStart" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Work End</label>
+                            <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.WorkSegments[@i].WorkEndDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].WorkEndDate" class="text-danger"></span>
+
+                                <input asp-for="NewRecap.WorkSegments[@i].WorkEnd" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].WorkEnd" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="mt-2">
+            <button type="button" class="btn btn-outline-primary" onclick="addWorkSegment()">+ Add Work Segment</button>
+        </div>
+    </div>
+    <!-- End of Work Segments -->
+
+    <!-- Drive Segments -->
+    <div class="col-6 mt-2">
+        <label class="form-label" id="LabelText">Driving Segments:</label>
+        <div id="segmentsDrive" class="d-flex flex-column">
+            @for (var i = 0; i < Model.NewRecap.WorkSegments.Count; i++)
+            {
+                <div class="card p-2" data-seg>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-6">
+                            <label class="form-label">Drive Start</label>
+                            <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.WorkSegments[@i].DriveStart" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].DriveStart" class="text-danger"></span>
+                        
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Drive End</label>
+                            <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.WorkSegments[@i].DriveEnd" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].DriveEnd" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="mt-2">
+            <button type="button" class="btn btn-outline-primary" onclick="addDriveSegment()">+ Add Drive Segment</button>
+        </div>
+    </div>
+    <!-- End of Drive Segments -->
+
+    <!-- Lunch Segments -->
+    <div class="col-6 mt-2">
+        <label class="form-label" id="LabelText">Lunch Segments:</label>
+
+        <div id="segmentsLunch" class="d-flex flex-column">
+            @for (var i = 0; i < Model.NewRecap.WorkSegments.Count; i++)
+            {
+                <div class="card p-2" data-seg>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-6">
+                            <label class="form-label">Lunch Start:</label>
+                            <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.WorkSegments[@i].LunchStart" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].LunchStart" class="text-danger"></span>
+
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Lunch End:</label>
+                            <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.WorkSegments[@i].LunchEnd" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].LunchEnd" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="mt-2">
+            <button type="button" class="btn btn-outline-primary" onclick="addLunchSegment()">+ Add Lunch Segment</button>
+        </div>
+    </div>
+    <!-- End of Lunch Segments -->
+
+    <!--Work Template-->
+    <template id="segmentTemplateWork">
+        <div class="card p-2 mt-2" data-seg>
+            <div class="row g-2 align-items-end">
+                <div class="col-12">
+                    <label class="form-label">Work Start:</label>
+                    <div class="d-flex flex-column gap-2">
+                        <input name="NewRecap.WorkSegments[__INDEX__].WorkStartDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].WorkStart" type="time" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Work End:</label>
+                    <div class="d-flex flex-column gap-2">
+                        <input name="NewRecap.WorkSegments[__INDEX__].WorkEndDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].WorkEnd" type="time" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                </div>
+            </div>
+        </div>
+    </template>
+    <!--End of Work Template-->
+
+    <!--Drive Template-->
+    <template id="segmentTemplateDrive">
+        <div class="card p-2 mt-2" data-seg>
+            <div class="row g-2 align-items-end">
+                <div class="col-12">
+                    <label class="form-label">Drive Start:</label>
+                    <div class="d-flex flex-column gap-2">
+                        <input name="NewRecap.WorkSegments[__INDEX__].DriveStartDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].DriveStart" type="time" class="form-control" />
+                
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Drive End:</label>
+                    <div class="d-flex flex-column gap-2">
+                        <input name="NewRecap.WorkSegments[__INDEX__].DriveEndDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].DriveEnd" type="time" class="form-control" />
+                
+                    </div>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                </div>
+            </div>
+        </div>
+    </template>
+    <!--End of Drive Template-->
+
+    <!--Lunch Template-->
+    <template id="segmentTemplateLunch">
+        <div class="card p-2 mt-2" data-seg>
+            <div class="row g-2 align-items-end">
+                <div class="col-12">
+                    <label class="form-label">Lunch Start:</label>
+                    <div class="d-flex flex-column gap-2">
+                        <input name="NewRecap.WorkSegments[__INDEX__].LunchStartDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].LunchStart" type="time" class="form-control" />
+
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Lunch End:</label>
+                    <div class="d-flex flex-column gap-2">
+                        <input name="NewRecap.WorkSegments[__INDEX__].LunchEndDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].LunchEnd" type="time" class="form-control" />
+
+                    </div>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                </div>
+            </div>
+        </div>
+    </template>
+    <!--End of Lunch Template-->
+
+    <script>
+        // Start at current count so indexes continue correctly
+        let segIndexWork  = @(Model.NewRecap.WorkSegments?.Count ?? 1);
+        let segIndexDrive = @(Model.NewRecap.WorkSegments?.Count ?? 1);
+        let segIndexLunch = @(Model.NewRecap.WorkSegments?.Count ?? 1);
+
+        function addWorkSegment() {
+          const tpl = document.getElementById('segmentTemplateWork').content.cloneNode(true);
+          const holder = document.createElement('div');
+          holder.appendChild(tpl);
+          holder.innerHTML = holder.innerHTML.replaceAll('__INDEX__', segIndexWork++);
+          document.getElementById('segmentsWork').append(...holder.childNodes);
+        }
+
+        function addDriveSegment() {
+          const tpl = document.getElementById('segmentTemplateDrive').content.cloneNode(true);
+          const holder = document.createElement('div');
+          holder.appendChild(tpl);
+          holder.innerHTML = holder.innerHTML.replaceAll('__INDEX__', segIndexDrive++);
+          document.getElementById('segmentsDrive').append(...holder.childNodes);
+        }
+
+        function addLunchSegment() {
+          const tpl = document.getElementById('segmentTemplateLunch').content.cloneNode(true);
+          const holder = document.createElement('div');
+          holder.appendChild(tpl);
+          holder.innerHTML = holder.innerHTML.replaceAll('__INDEX__', segIndexLunch++);
+          document.getElementById('segmentsLunch').append(...holder.childNodes);
+        }
+
+        function removeSegment(btn) {
+          const card = btn.closest('[data-seg]');
+          if (card) card.remove();
+        }
+    </script>
+
+    <!--Submit Button-->
+    <div class="row my-2">
+        <div class="col-12">
+            <button type="submit" class="form-control btn btn-primary"><i class="bi bi-plus-square"></i> Add Recap</button>
+        </div>
+    </div>
+    <!--End of Submit Button-->
+</form> 

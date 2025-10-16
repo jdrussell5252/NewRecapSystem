@@ -1,0 +1,61 @@
+﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+for details on configuring this project to bundle and minify static web assets. */
+
+/*-------------------------------------Navigation Bar----------------------------------------------------*/
+.nav-item:hover {
+    background-color: #8c8a8a;
+}
+
+.nav-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #222;
+    color: white;
+}
+
+.navbar-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+
+/*-------------------------------------End of Navigation Bar----------------------------------------------------*/
+
+/*----------------------------------------Footer--------------------------------------------------*/
+.footer {
+    display: flex;
+    background-color: #222; /* Dark background */
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.footer-section {
+    flex: 1;
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+    .footer-section:nth-child(1),
+    .footer-section:nth-child(2) {
+        border-right: 2px solid white;
+    }
+
+    .footer-section:nth-child(3) {
+        border-right: none;
+    }
+
+/* Style for social icons */
+.social-icons i {
+    font-size: 40px;
+    margin: 0 10px;
+}
+/*----------------------------------------End of Footer--------------------------------------------------*/
