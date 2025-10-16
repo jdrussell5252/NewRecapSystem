@@ -44,7 +44,7 @@ namespace NewRecap.Pages
                 using (var cmd = new OleDbCommand(query, conn))
                 {
                     // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.Add("@p1", OleDbType.Integer).Value = userId;
+                    cmd.Parameters.Add("@?", OleDbType.Integer).Value = userId;
 
                     conn.Open();
                     var roleObj = cmd.ExecuteScalar();

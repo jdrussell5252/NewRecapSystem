@@ -1,0 +1,27 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.EditStoreStateModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Edit State</label>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="row my-2">
+        <div class="col-4">
+            <label asp-for="Locations.StoreState" class="form-label" id="LabelText">State:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="Locations.StoreState" type="text" class="form-control" />
+            <span asp-validation-for="Locations.StoreState" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col-12">
+            <button type="submit" class="form-control btn btn-primary">Confirm Edit</button>
+        </div>
+    </div>
+</form>

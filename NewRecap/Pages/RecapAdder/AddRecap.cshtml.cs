@@ -11,7 +11,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NewRecap.Pages.RecapAdder
 {
-    //[Authorize]
+    [Authorize]
     [BindProperties]
     public class AddRecapModel : PageModel
     {
@@ -28,8 +28,6 @@ namespace NewRecap.Pages.RecapAdder
 
         public void OnGet()
         {
-            PopulateEmployeeList();
-            PopulateVehicleList();
             //PopulateLocationList();
             /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
@@ -39,7 +37,8 @@ namespace NewRecap.Pages.RecapAdder
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
-
+            PopulateEmployeeList();
+            PopulateVehicleList();
             /*--------------------ADMIN PRIV----------------------*/
         }// End of 'OnGet'.
 
@@ -208,23 +207,34 @@ namespace NewRecap.Pages.RecapAdder
 
         private void CheckIfUserIsAdmin(int userId)
         {
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            using (var conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserRole;";
-                using (OleDbCommand command = new OleDbCommand(query, conn))
+                // Adjust names to match your schema exactly:
+                // If your column is AccountTypeID instead of SystemUserRole, swap it below.
+                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = ?;";
+
+                using (var cmd = new OleDbCommand(query, conn))
                 {
-                    command.Parameters.AddWithValue("@SystemUserRole", userId);
+                    // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
+                    cmd.Parameters.Add("@?", OleDbType.Integer).Value = userId;
+
                     conn.Open();
-                    var result = command.ExecuteScalar();
-                    // If AccountTypeID is 2, set IsUserAdmin to true
-                    if (result != null && result.ToString() == "2")
+                    var roleObj = cmd.ExecuteScalar();
+
+                    // Handle both null and DBNull
+                    if (roleObj != null && roleObj != DBNull.Value)
                     {
-                        this.IsAdmin = true;
-                        ViewData["IsAdmin"] = true;
+                        int role = Convert.ToInt32(roleObj);
+
+                        // If your schema uses AccountTypeID (1=user, 2=admin), adjust accordingly
+                        this.IsAdmin = (role == 2);
+                        ViewData["IsAdmin"] = this.IsAdmin;
                     }
                     else
                     {
+                        // No row or NULL role
                         this.IsAdmin = false;
+                        ViewData["IsAdmin"] = false;
                     }
                 }
             }
