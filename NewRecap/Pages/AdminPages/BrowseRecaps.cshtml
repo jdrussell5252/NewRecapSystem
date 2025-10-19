@@ -2,3 +2,79 @@
 @model NewRecap.Pages.AdminPages.BrowseRecapsModel
 @{
 }
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Browse Recaps</label>
+    </div>
+</div>
+
+@if (Model.Recaps.Count != 0)
+{
+    @foreach (var recap in @Model.Recaps)
+    {
+        <div class="row my-2">
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.RecapWorkorderNumber">Workorder Number:</label>
+                    <label class="form-label" id="LabelText">@recap.RecapWorkorderNumber</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.RecapDate">Recap Date:</label>
+                    <label class="form-label" id="LabelText">@recap.RecapDate.ToString("MM/dd/yyyy")</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.RecapDescription">Recap Description:</label>
+                    <label class="form-label" id="LabelText">@recap.RecapDescription</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.RecapState">Recap State:</label>
+                    <label class="form-label" id="LabelText">@recap.RecapState</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.RecapCity">Recap City:</label>
+                <label class="form-label" id="LabelText">@recap.RecapCity</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-4">
+                    <label class="form-label" id="LabelText" asp-for="@recap.RecapEmployees">Employees:</label>
+                </div>
+                <div class="col">
+                    @foreach (var employees in recap.RecapEmployees)
+                    {
+                        <span class="badge bg-secondary"> @employees</span>
+                    }
+                </div>
+            </div>
+        </div>
+            <form method="post" enctype=" multipart /form-data">
+
+                <button onclick="return confirm('Are you sure?')" class="btn btn-danger" asp-route-id="@recap.RecapID" asp-page-handler="Delete">Delete</button>
+            </form>
+        
+        <hr />
+    }
+}
+else
+{
+    <div class="row my-2">
+        <div class="col-12">
+            <label class="form-label" id="LabelText">No Recaps yet.</label>
+        </div>
+    </div>
+}

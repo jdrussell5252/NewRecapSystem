@@ -52,9 +52,9 @@ namespace NewRecap.Pages.RecapAdder
                     conn.Open();
 
                     int LocationID = NewRecap.LocationID;
-                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapState, RecapCity) VALUES (@RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapState, @RecapCity);";
+                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapState, RecapCity) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapState, @RecapCity);";
                     OleDbCommand cmdRecap = new OleDbCommand(cmdTextRecap, conn);
-                    cmdRecap.Parameters.AddWithValue("@RecapDate", NewRecap.RecapWorkorderNumber);
+                    cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
                     cmdRecap.Parameters.AddWithValue("@RecapDate", NewRecap.RecapDate);
                     cmdRecap.Parameters.AddWithValue("@AddedBy", userId);
                     cmdRecap.Parameters.AddWithValue("@VehicleID", NewRecap.VehicleID);
@@ -70,60 +70,65 @@ namespace NewRecap.Pages.RecapAdder
                         RecapID = Convert.ToInt32(idCmd.ExecuteScalar());
                     }
 
-                    string cmdTextRecapLocation = "INSERT INTO RecapLocation (LocationID, RecapID) VALUES (@LocationID, @RecapID);";
-                    OleDbCommand cmdRecapLocation = new OleDbCommand(cmdTextRecapLocation, conn);
-                    cmdRecapLocation.Parameters.AddWithValue("@LocationID", LocationID);
-                    cmdRecapLocation.Parameters.AddWithValue("@RecapID", RecapID);
-                    cmdRecapLocation.ExecuteNonQuery();
-
-                    /*Work Segments*/
-                    foreach (var seg in NewRecap.WorkSegments.Where(s => s.WorkStart.HasValue && s.WorkEnd.HasValue))
+                    foreach (var empId in SelectedEmployeeIds)
                     {
-                        string cmdTextRecapTimes = "INSERT INTO StartEnd (RecapID, EmployeeID, StartTime, EndTime, StartTimeDate, EndTimeDate) VALUES (@RecapID, @EmployeeID, @StartTime, @EndTime, @StartTimeDate, @EndTimeDate);";
-                        OleDbCommand cmdTimes = new OleDbCommand(cmdTextRecapTimes, conn);
-                        cmdTimes.Parameters.AddWithValue("@RecapID", RecapID);
-                        cmdTimes.Parameters.AddWithValue("@EmployeeID", userId);
-                        cmdTimes.Parameters.AddWithValue("@StartTime", seg.WorkStart.Value);
-                        cmdTimes.Parameters.AddWithValue("@EndTime", seg.WorkEnd.Value);
-                        cmdTimes.Parameters.AddWithValue("@StartTimeDate", seg.WorkStartDate.Value);
-                        cmdTimes.Parameters.AddWithValue("@EndTimeDate", seg.WorkEndDate.Value);
-                        cmdTimes.ExecuteNonQuery();
-                    }
 
-                    foreach (var seg in NewRecap.WorkSegments.Where(s => s.DriveStart.HasValue && s.DriveEnd.HasValue))
-                    {
-                        string cmdTextRecapTimes = "INSERT INTO StartEnd (RecapID, EmployeeID, StartDriveTime, StartDriveDate, EndDriveTime, EndDriveDate) VALUES (@RecapID, @EmployeeID, @StartDriveTime, @StartDriveDate, @EndDriveTime, @EndDriveDate);";
-                        OleDbCommand cmdTimes = new OleDbCommand(cmdTextRecapTimes, conn);
-                        cmdTimes.Parameters.AddWithValue("@RecapID", RecapID);
-                        cmdTimes.Parameters.AddWithValue("@EmployeeID", userId);
-                        cmdTimes.Parameters.AddWithValue("@StartDriveTime", seg.DriveStart.Value);
-                        cmdTimes.Parameters.AddWithValue("@EndDriveTime", seg.DriveEnd.Value);
-                        cmdTimes.Parameters.AddWithValue("@StartDriveDate", seg.DriveStartDate.Value);
-                        cmdTimes.Parameters.AddWithValue("@EndDriveDate", seg.DriveEndDate.Value);
-                        cmdTimes.ExecuteNonQuery();
-                    }
+                        string cmdTextEmployeeRecap = "INSERT INTO EmployeeRecaps (RecapID, EmployeeID) VALUES (@RecapID, @EmployeeID)";
+                        OleDbCommand cmdEmployeeRecap = new OleDbCommand(cmdTextEmployeeRecap, conn);
+                        cmdEmployeeRecap.Parameters.AddWithValue("@RecapID", RecapID);
+                        cmdEmployeeRecap.Parameters.AddWithValue("@EmployeeID", empId);
+                        cmdEmployeeRecap.ExecuteNonQuery();
+                        // For each segment that has at least one valid start/end pair
+                        var segments = NewRecap.WorkSegments.Where(s =>
+                            (s.WorkStart.HasValue && s.WorkEnd.HasValue) ||
+                            (s.DriveStart.HasValue && s.DriveEnd.HasValue) ||
+                            (s.LunchStart.HasValue && s.LunchEnd.HasValue));
 
-                    foreach (var seg in NewRecap.WorkSegments.Where(s => s.LunchStart.HasValue && s.LunchEnd.HasValue))
-                    {
-                        string cmdTextRecapTimes = "INSERT INTO StartEnd (RecapID, EmployeeID, StartLunchTime, EndLunchTime, StartLunchDate, EndLunchDate) VALUES (@RecapID, @EmployeeID, @StartLunchTime, @EndLunchTime, @StartLunchDate, @EndLunchDate);";
-                        OleDbCommand cmdTimes = new OleDbCommand(cmdTextRecapTimes, conn);
-                        cmdTimes.Parameters.AddWithValue("@RecapID", RecapID);
-                        cmdTimes.Parameters.AddWithValue("@EmployeeID", userId);
-                        cmdTimes.Parameters.AddWithValue("@StartLunchTime", seg.LunchStart.Value);
-                        cmdTimes.Parameters.AddWithValue("@EndLunchTime", seg.LunchEnd.Value);
-                        cmdTimes.Parameters.AddWithValue("@StartLunchDate", seg.LunchStartDate.Value);
-                        cmdTimes.Parameters.AddWithValue("@EndLunchDate", seg.LunchEndDate.Value);
-                        cmdTimes.ExecuteNonQuery();
+                        foreach (var seg in segments)
+                        {
+                            const string sql = @"
+                            INSERT INTO StartEnd
+                            (RecapID, EmployeeID,
+                            StartTime, EndTime, StartTimeDate, EndTimeDate,
+                            StartDriveTime, EndDriveTime, StartDriveDate, EndDriveDate,
+                            StartLunchTime, EndLunchTime, StartLunchDate, EndLunchDate)
+                            VALUES
+                            (@RecapID, @EmployeeID,
+                            @StartTime, @EndTime, @StartTimeDate, @EndTimeDate,
+                            @StartDriveTime, @EndDriveTime, @StartDriveDate, @EndDriveDate,
+                            @StartLunchTime, @EndLunchTime, @StartLunchDate, @EndLunchDate);";
+
+                            using var cmd = new OleDbCommand(sql, conn);
+
+                            // IMPORTANT: OleDb uses positional parameters — add in the same order as the SQL
+                            cmd.Parameters.Add("@RecapID", OleDbType.Integer).Value = RecapID;
+                            cmd.Parameters.Add("@EmployeeID", OleDbType.Integer).Value = empId;
+
+                            cmd.Parameters.AddWithValue("@StartTime", (object?)seg.WorkStart ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndTime", (object?)seg.WorkEnd ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@StartTimeDate", (object?)seg.WorkStartDate ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndTimeDate", (object?)seg.WorkEndDate ?? DBNull.Value);
+
+                            cmd.Parameters.AddWithValue("@StartDriveTime", (object?)seg.DriveStart ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndDriveTime", (object?)seg.DriveEnd ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@StartDriveDate", (object?)seg.DriveStartDate ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndDriveDate", (object?)seg.DriveEndDate ?? DBNull.Value);
+
+                            cmd.Parameters.AddWithValue("@StartLunchTime", (object?)seg.LunchStart ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndLunchTime", (object?)seg.LunchEnd ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@StartLunchDate", (object?)seg.LunchStartDate ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndLunchDate", (object?)seg.LunchEndDate ?? DBNull.Value);
+
+                            cmd.ExecuteNonQuery();
+                        }
                     }
-                    /*End of Work Segments*/
                 }
-                return RedirectToAction("/Pages/Index");
+                return RedirectToPage("/Index");
             }
             else
             {
 
                 PopulateEmployeeList();
-                //PopulateLocationList();
                 PopulateVehicleList();
                 return Page();
             }
@@ -153,32 +158,6 @@ namespace NewRecap.Pages.RecapAdder
                 }
             }
         }// End of 'PopulateVechileList'.
-
-        /*
-        private void PopulateLocationList()
-        {
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
-            {
-                string query = "SELECT LocationID, State, City FROM Locations";
-                OleDbCommand cmd = new OleDbCommand(query, conn);
-                conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        var location = new SelectListItem
-                        {
-                            Value = reader["LocationID"].ToString(),
-                            Text = $"{reader["State"]}, {reader["City"]}"
-                        };
-                        Locations.Add(location);
-
-                    }
-                }
-            }
-        }//End of 'PopulateLocationList'.
-        */
 
         private void PopulateEmployeeList()
         {

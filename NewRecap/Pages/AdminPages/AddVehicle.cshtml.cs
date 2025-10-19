@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Data.OleDb;
 using System.Security.Claims;
 
-namespace NewRecap.Pages.Account
+namespace NewRecap.Pages.AdminPages
 {
-    public class ProfileModel : PageModel
+    public class AddVehicleModel : PageModel
     {
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
@@ -22,6 +22,7 @@ namespace NewRecap.Pages.Account
             /*--------------------ADMIN PRIV----------------------*/
         }
 
+        /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
         {
             using (var conn = new OleDbConnection(this.connectionString))

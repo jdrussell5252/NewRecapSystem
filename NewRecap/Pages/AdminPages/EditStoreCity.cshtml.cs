@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Data.SqlClient;
 using NewRecap.Model;
-using NewRecap.MyAppHelper;
 using System.Data.OleDb;
 using System.Security.Claims;
 

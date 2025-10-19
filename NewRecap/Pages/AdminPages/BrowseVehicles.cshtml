@@ -1,0 +1,72 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.BrowseVehiclesModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Browse Vechicles</label>
+    </div>
+</div>
+
+<!-- Error Message-->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["ErrorMessage"]
+    </div>
+}
+<div class="row my-2">
+    <div class="col-2">
+        <a asp-page="AddVehicle" class="btn btn-primary"><i class="bi bi-plus-square"></i> Add</a>
+    </div>
+</div>
+
+
+@if (Model.Vehicles.Count != 0)
+{
+    @foreach (var LocalLocation in Model.Vehicles)
+    {
+        <div class="row my-3 p-4 bg-dark text-white border border-secondary rounded align-items-center text-center">
+
+            <div class="col-md-1">
+                <form method="post" asp-page-handler="Delete">
+                    <input type="hidden" name="id" value="@LocalLocation.VehicleID" />
+                    <button onclick="return confirm('Are you sure?')" class="btn btn-danger">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </form>
+            </div>
+            <!--Delete Button-->
+            <div class="col-md-3 border-end border-secondary">
+                <!-- left column -->
+                <label class="form-label fw-bold">Vehicle Number:</label>
+                <div>@(LocalLocation.VehicleNumber)</div>
+                <a asp-page="EditVehicleNumber" asp-route-id="@LocalLocation.VehicleID" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Edit Number</a>
+            </div>
+
+            <div class="col-md-4 border-end border-secondary">
+                <!-- left column -->
+                <label class="form-label fw-bold">Vehicle Name:</label>
+                <div>@(LocalLocation.VehicleName ?? "N/A")</div>
+                <a asp-page="EditVehicleName" asp-route-id="@LocalLocation.VehicleID" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Edit Name</a>
+            </div>
+
+            <div class="col-md-4">
+                <!-- left column -->
+                <label class="form-label fw-bold">Vehicle Vin:</label>
+                <div>@(LocalLocation.VehicleVin)</div>
+                <a asp-page="EditVehicleVin" asp-route-id="@LocalLocation.VehicleID" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Edit Vin</a>
+            </div>
+        </div>
+        <hr />
+    }
+}
+else
+{
+    <div class="row my-2">
+        <div class="col-12">
+            <label class="form-label" id="LabelText">No vehicles yet. Click 'Add Vehicle' to add a new vehicle.</label>
+        </div>
+    </div>
+}

@@ -2,9 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Data.SqlClient;
 using NewRecap.Model;
-using NewRecap.MyAppHelper;
 using System.Data.OleDb;
 using System.Security.Claims;
 
@@ -28,15 +26,15 @@ namespace NewRecap.Pages.AdminPages
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
+                PopulateLocationList();
             }
-            PopulateLocationList();
         }
 
         private void PopulateLocationList()
         {
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT * FROM StoreLocations";
+                string query = "SELECT StoreLocationID, StoreNumber, StoreCity, StoreState FROM StoreLocations";
                 OleDbCommand cmd = new OleDbCommand(query, conn);
                 conn.Open();
                 OleDbDataReader reader = cmd.ExecuteReader();
@@ -47,8 +45,9 @@ namespace NewRecap.Pages.AdminPages
                         LocationView ALocation = new LocationView
                         {
                             StoreLocationID = reader.GetInt32(0),
-                            StoreCity = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                            StoreState = reader.IsDBNull(2) ? string.Empty : reader.GetString(2)
+                            StoreNumber = reader.GetInt32(1),
+                            StoreCity = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                            StoreState = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
                         };
                         Locations.Add(ALocation);
 

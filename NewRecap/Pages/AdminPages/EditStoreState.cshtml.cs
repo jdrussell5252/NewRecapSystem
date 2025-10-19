@@ -69,7 +69,7 @@ namespace NewRecap.Pages.AdminPages
                         Locations = new LocationView
                         {
                             StoreLocationID = reader.GetInt32(0),
-                            StoreState = reader.GetString(1)
+                            StoreState = reader.GetString(3)
                         };
                     }
                 }

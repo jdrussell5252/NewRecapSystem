@@ -53,7 +53,7 @@ namespace NewRecap.Pages.RecapAdder
         {
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT StoreLocationID, StoreState, StoreCity FROM StoreLocations";
+                string query = "SELECT * FROM StoreLocations";
                 OleDbCommand cmd = new OleDbCommand(query, conn);
                 conn.Open();
                 OleDbDataReader reader = cmd.ExecuteReader();
@@ -64,7 +64,7 @@ namespace NewRecap.Pages.RecapAdder
                         var location = new SelectListItem
                         {
                             Value = reader["StoreLocationID"].ToString(),
-                            Text = $"{reader["StoreLocationID"]}, {reader["StoreState"]}, {reader["StoreCity"]}"
+                            Text = $"{reader["StoreNumber"]}, {reader["StoreState"]}, {reader["StoreCity"]}"
                         };
                         Locations.Add(location);
 

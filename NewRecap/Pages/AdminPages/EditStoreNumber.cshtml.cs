@@ -23,9 +23,9 @@ namespace NewRecap.Pages.AdminPages
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
+                PopulateLocationList(id);
             }
             /*--------------------ADMIN PRIV----------------------*/
-            PopulateLocationList(id);
         }
 
         public IActionResult OnPost(int id)
@@ -36,32 +36,11 @@ namespace NewRecap.Pages.AdminPages
                 {
                     using (OleDbConnection conn = new OleDbConnection(this.connectionString))
                     {
-                        conn.Open();
-                        // Ensure we have the original key on post (fallback to bound model)
-                        var oldId = id != 0 ? id : Locations.StoreLocationID_Original; // see note below
-                        var newId = Locations.StoreLocationID;
-
-                        if (newId == oldId)
-                            return RedirectToPage("BrowseStoreLocations");
-
-                        // Optional: block duplicates before update
-                        string queryExists = "SELECT COUNT(*) FROM [StoreLocations] WHERE [StoreLocationID] = ?";
-                        OleDbCommand exists = new OleDbCommand(queryExists, conn);
-                        
-                        exists.Parameters.Add("@p1", OleDbType.Integer).Value = newId;
-                        if (Convert.ToInt32(exists.ExecuteScalar()) > 0)
-                        {
-                            ModelState.AddModelError(nameof(Locations.StoreLocationID),
-                                $"Store number {newId} already exists.");
-                            return RedirectToPage("BrowseStoreLocations");
-                        }
-                        
-
-                        string cmdText = "UPDATE StoreLocations SET StoreLocationID = ? WHERE StoreLocationID = ?";
+                        string cmdText = "UPDATE StoreLocations SET StoreNumber = @StoreNumber WHERE StoreLocationID = @StoreLocationID";
                         OleDbCommand cmd = new OleDbCommand(cmdText, conn);
-                        cmd.Parameters.Add("@p1", OleDbType.Integer).Value = newId; // SET value
-                        cmd.Parameters.Add("@p2", OleDbType.Integer).Value = oldId;
-
+                        cmd.Parameters.AddWithValue("@StoreNumber", Locations.StoreNumber);
+                        cmd.Parameters.AddWithValue("@StoreLocationID", id);
+                        conn.Open();
                         cmd.ExecuteNonQuery();
                     }
                     return RedirectToPage("BrowseStoreLocations");
@@ -89,7 +68,8 @@ namespace NewRecap.Pages.AdminPages
                     {
                         Locations = new LocationView
                         {
-                            StoreLocationID = reader.GetInt32(0)
+                            StoreLocationID = reader.GetInt32(0),
+                            StoreNumber = reader.GetInt32(1)
                         };
                     }
                 }

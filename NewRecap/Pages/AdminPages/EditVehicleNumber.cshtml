@@ -1,22 +1,22 @@
 ﻿@page
-@model NewRecap.Pages.AdminPages.EditStoreNumberModel
+@model NewRecap.Pages.AdminPages.EditVehicleNumberModel
 @{
 }
 
 <div class="row text-center">
     <div class="col-12">
-        <label class="form-label fs-1" id="LabelText">Edit Store Number</label>
+        <label class="form-label fs-1" id="LabelText">Edit Vehicle Number</label>
     </div>
 </div>
 
 <form method="post" enctype="multipart/form-data">
     <div class="row my-2">
         <div class="col-4">
-            <label asp-for="Locations.StoreNumber" class="form-label" id="LabelText">Store Number:</label>
+            <label asp-for="Vehicles.VehicleNumber" class="form-label" id="LabelText">Vehicle Number:</label>
         </div>
         <div class="col-12">
-            <input asp-for="Locations.StoreNumber" type="text" class="form-control" />
-            <span asp-validation-for="Locations.StoreNumber" class="text-danger"></span>
+            <input asp-for="Vehicles.VehicleNumber" type="text" class="form-control" />
+            <span asp-validation-for="Vehicles.VehicleNumber" class="text-danger"></span>
         </div>
     </div>
     <div class="row my-2">

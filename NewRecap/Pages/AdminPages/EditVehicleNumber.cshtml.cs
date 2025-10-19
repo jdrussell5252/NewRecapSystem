@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NewRecap.Model;
@@ -7,13 +6,13 @@ using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
 {
-    [Authorize]
-    public class BrowseRecapsModel : PageModel
+    public class EditVehicleNumberModel : PageModel
     {
-        public List<RecapView> Recaps { get; set; } = new List<RecapView>();
+        [BindProperty]
+        public VehicleView Vehicles { get; set; } = new VehicleView();
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
-        public void OnGet()
+        public void OnGet(int id)
         {
             /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
@@ -22,81 +21,59 @@ namespace NewRecap.Pages.AdminPages
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
-                PopulateRecapList();
+                PopulateLocationList(id);
             }
             /*--------------------ADMIN PRIV----------------------*/
         }
 
-        public IActionResult OnPostDelete(int id)
+        public IActionResult OnPost(int id)
         {
-            // delete the book from the database
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            if (ModelState.IsValid)
             {
-                conn.Open();
-
-
-                string deleteCmdText = "DELETE FROM Recap WHERE RecapID = @RecapID";
-                OleDbCommand deleteCmd = new OleDbCommand(deleteCmdText, conn);
-                deleteCmd.Parameters.AddWithValue("@RecapID", id);
-                deleteCmd.ExecuteNonQuery();
-
+                try
+                {
+                    using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+                    {
+                        string cmdText = "UPDATE Vehicle SET VehicleNumber = @VehicleNumber WHERE VehicleID = @VehicleID";
+                        OleDbCommand cmd = new OleDbCommand(cmdText, conn);
+                        cmd.Parameters.AddWithValue("@VehicleNumber", Vehicles.VehicleNumber);
+                        cmd.Parameters.AddWithValue("@VehicleID", id);
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                    return RedirectToPage("BrowseVehicles");
+                }
+                catch
+                {
+                    throw;
+                }
             }
+            return Page();
+        }//End of 'OnPost'.
 
-            return RedirectToPage();
-        }//End of 'OnPostDelete'.
-
-        private void PopulateRecapList()
+        private void PopulateLocationList(int id)
         {
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT RecapID, RecapWorkorderNumber, RecapDate, RecapDescription, RecapState, RecapCity FROM Recap";
+                string query = "SELECT VehicleID, VehicleNumber FROM Vehicle WHERE VehicleID = @VehicleID";
                 OleDbCommand cmd = new OleDbCommand(query, conn);
+                cmd.Parameters.AddWithValue("@VehicleID", id);
                 conn.Open();
                 OleDbDataReader reader = cmd.ExecuteReader();
                 if (reader.HasRows)
                 {
                     while (reader.Read())
                     {
-                        RecapView ARecap = new RecapView
+                        Vehicles = new VehicleView
                         {
-                            RecapID = reader.GetInt32(0),
-                            RecapWorkorderNumber = reader.GetInt32(1),
-                            RecapDate = reader.GetDateTime(2),
-                            RecapDescription = reader.GetString(3),
-                            RecapState = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                            RecapCity = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                            RecapEmployees = PopulateRecapEmployees(reader.GetInt32(0))
+                            VehicleID = reader.GetInt32(0),
+                            VehicleNumber = reader.GetInt32(1)
                         };
-                        Recaps.Add(ARecap);
-
                     }
                 }
             }
         }//End of 'PopulateLocationList'.
 
-        private List<string> PopulateRecapEmployees(int recapID)
-        {
-            List<string> Employees = new List<string>();
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
-            {
-                string query = "SELECT e.EmployeeFName " +
-                               "FROM Employee AS e " +
-                               "INNER JOIN EmployeeRecaps AS er ON e.EmployeeID = er.EmployeeID " +
-                               "WHERE er.RecapID = @RecapID";
-                OleDbCommand cmd = new OleDbCommand(query, conn);
-                cmd.Parameters.AddWithValue("@RecapID", recapID);
-                conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        Employees.Add(reader.GetString(0));
-                    }
-                }
-            }
-            return Employees;
-        }
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

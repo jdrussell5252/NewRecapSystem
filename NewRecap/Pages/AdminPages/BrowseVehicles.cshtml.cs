@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NewRecap.Model;
@@ -7,12 +6,12 @@ using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
 {
-    [Authorize]
-    public class BrowseRecapsModel : PageModel
+    public class BrowseVehiclesModel : PageModel
     {
-        public List<RecapView> Recaps { get; set; } = new List<RecapView>();
+        public List<VehicleView> Vehicles { get; set; } = new List<VehicleView>();
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
+
         public void OnGet()
         {
             /*--------------------ADMIN PRIV----------------------*/
@@ -22,7 +21,7 @@ namespace NewRecap.Pages.AdminPages
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
-                PopulateRecapList();
+                PopulateVehicleList();
             }
             /*--------------------ADMIN PRIV----------------------*/
         }
@@ -35,9 +34,9 @@ namespace NewRecap.Pages.AdminPages
                 conn.Open();
 
 
-                string deleteCmdText = "DELETE FROM Recap WHERE RecapID = @RecapID";
+                string deleteCmdText = "DELETE FROM Vehicle WHERE VehicleID = @VehicleID";
                 OleDbCommand deleteCmd = new OleDbCommand(deleteCmdText, conn);
-                deleteCmd.Parameters.AddWithValue("@RecapID", id);
+                deleteCmd.Parameters.AddWithValue("@VehicleID", id);
                 deleteCmd.ExecuteNonQuery();
 
             }
@@ -45,11 +44,11 @@ namespace NewRecap.Pages.AdminPages
             return RedirectToPage();
         }//End of 'OnPostDelete'.
 
-        private void PopulateRecapList()
+        private void PopulateVehicleList()
         {
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT RecapID, RecapWorkorderNumber, RecapDate, RecapDescription, RecapState, RecapCity FROM Recap";
+                string query = "SELECT VehicleID, VehicleNumber, VehicleVin, VehicleName FROM Vehicle";
                 OleDbCommand cmd = new OleDbCommand(query, conn);
                 conn.Open();
                 OleDbDataReader reader = cmd.ExecuteReader();
@@ -57,46 +56,19 @@ namespace NewRecap.Pages.AdminPages
                 {
                     while (reader.Read())
                     {
-                        RecapView ARecap = new RecapView
+                        VehicleView AVehicle = new VehicleView
                         {
-                            RecapID = reader.GetInt32(0),
-                            RecapWorkorderNumber = reader.GetInt32(1),
-                            RecapDate = reader.GetDateTime(2),
-                            RecapDescription = reader.GetString(3),
-                            RecapState = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                            RecapCity = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                            RecapEmployees = PopulateRecapEmployees(reader.GetInt32(0))
+                            VehicleID = reader.GetInt32(0),
+                            VehicleNumber = reader.GetInt32(1),
+                            VehicleVin = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                            VehicleName = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
                         };
-                        Recaps.Add(ARecap);
+                        Vehicles.Add(AVehicle);
 
                     }
                 }
             }
         }//End of 'PopulateLocationList'.
-
-        private List<string> PopulateRecapEmployees(int recapID)
-        {
-            List<string> Employees = new List<string>();
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
-            {
-                string query = "SELECT e.EmployeeFName " +
-                               "FROM Employee AS e " +
-                               "INNER JOIN EmployeeRecaps AS er ON e.EmployeeID = er.EmployeeID " +
-                               "WHERE er.RecapID = @RecapID";
-                OleDbCommand cmd = new OleDbCommand(query, conn);
-                cmd.Parameters.AddWithValue("@RecapID", recapID);
-                conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        Employees.Add(reader.GetString(0));
-                    }
-                }
-            }
-            return Employees;
-        }
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

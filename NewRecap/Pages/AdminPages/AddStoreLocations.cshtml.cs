@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Data.SqlClient;
 using NewRecap.Model;
-using NewRecap.MyAppHelper;
 using System.Data.OleDb;
 using System.Security.Claims;
 
@@ -14,6 +12,7 @@ namespace NewRecap.Pages.AdminPages
     {
         [BindProperty]
         public MyLocations NewLocation { get; set; }
+        public LocationView Locations { get; set; } = new LocationView();
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
         public void OnGet()
@@ -28,36 +27,40 @@ namespace NewRecap.Pages.AdminPages
             }
         }
 
-        public IActionResult OnPost()
+        public IActionResult OnPost(int id)
         {
             if (ModelState.IsValid)
             {
                 using (OleDbConnection conn = new OleDbConnection(this.connectionString))
                 {
+
                     conn.Open();
 
-                    string cmdText = "SELECT COUNT(*) FROM StoreLocations WHERE StoreLocationID = @StoreLocationID AND StoreState = @StoreState AND StoreCity = @StoreCity;";
+                    string cmdText = "SELECT Count(*) FROM StoreLocations WHERE StoreNumber = @StoreNumber AND StoreState = @StoreState AND StoreCity = @StoreCity;";
                     OleDbCommand checkCmd = new OleDbCommand(cmdText, conn);
-                    checkCmd.Parameters.AddWithValue("@StoreLocationID", NewLocation.StoreLocationID);
+                    checkCmd.Parameters.AddWithValue("@StoreLocationID", NewLocation.StoreNumber);
                     checkCmd.Parameters.AddWithValue("@StoreState", NewLocation.StoreState);
                     checkCmd.Parameters.AddWithValue("@StoreCity", NewLocation.StoreCity);
-
+                    
+                    /*
                     int Count = (int)checkCmd.ExecuteScalar();
                     if (Count > 0)
                     {
                         ModelState.AddModelError(string.Empty, "This location already exists.");
-                        return Page();
+                        return RedirectToPage("BrowseStoreLocations");
                     }
+                    */
+                    
 
-                    string insertcmdText = "INSERT INTO StoreLocations (StoreLocationID, StoreState, StoreCity) VALUES (@StoreLocationID, @StoreState, @StoreCity);";
+                    string insertcmdText = "INSERT INTO StoreLocations (StoreNumber, StoreState, StoreCity) VALUES (@StoreNumber, @StoreState, @StoreCity);";
                     OleDbCommand insertcmd = new OleDbCommand(insertcmdText, conn);
-                    insertcmd.Parameters.AddWithValue("@StoreLocationID", NewLocation.StoreLocationID);
+                    insertcmd.Parameters.AddWithValue("@StoreNumber", NewLocation.StoreNumber);
                     insertcmd.Parameters.AddWithValue("@StoreState", NewLocation.StoreState);
                     insertcmd.Parameters.AddWithValue("@StoreCity", NewLocation.StoreCity);
 
                     insertcmd.ExecuteNonQuery();
                 }
-                return RedirectToPage("/AdminPages/BrowseStoreLocations");
+                return RedirectToPage("BrowseStoreLocations");
             }
             // If the model state is not valid, return to the same page with validation errors
             return Page();
