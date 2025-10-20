@@ -50,7 +50,41 @@ namespace NewRecap.Pages.AdminPages
         {
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT r.RecapID, r.RecapWorkorderNumber, r.RecapDate, r.RecapDescription, r.RecapState, r.RecapCity, r.RecapAssetNumber, r.RecapSerialNumber, v.VehicleID, v.VehicleName, v.VehicleNumber, v.VehicleVin, se.TotalWorkTime, se.TotalLunchTime, se.TotalDriveTime, sl.StoreLocationID, sl.StoreNumber, sl.StoreState, sl.StoreCity FROM ((Recap AS r LEFT JOIN Vehicle AS v ON v.VehicleID = r.VehicleID) LEFT JOIN StoreLocations AS sl ON sl.StoreLocationID = r.StoreLocationID) LEFT JOIN StartEnd AS se ON se.RecapID = r.RecapID ORDER BY r.RecapDate DESC, r.RecapID DESC;";
+                //string query = "SELECT r.RecapID, r.RecapWorkorderNumber, r.RecapDate, r.RecapDescription, r.RecapState, r.RecapCity, r.RecapAssetNumber, r.RecapSerialNumber, v.VehicleID, v.VehicleName, v.VehicleNumber, v.VehicleVin, se.TotalWorkTime, se.TotalLunchTime, se.TotalDriveTime, sl.StoreLocationID, sl.StoreNumber, sl.StoreState, sl.StoreCity FROM ((Recap AS r LEFT JOIN Vehicle AS v ON v.VehicleID = r.VehicleID) LEFT JOIN StoreLocations AS sl ON sl.StoreLocationID = r.StoreLocationID) LEFT JOIN StartEnd AS se ON se.RecapID = r.RecapID ORDER BY r.RecapDate DESC, r.RecapID DESC;";
+                const string query = @"
+                SELECT
+                r.RecapID,
+  r.RecapWorkorderNumber,
+  r.RecapDate,
+  r.RecapDescription,
+  r.RecapState,
+  r.RecapCity,
+  r.RecapAssetNumber,
+  r.RecapSerialNumber,
+
+  v.VehicleID,
+  v.VehicleName,
+  v.VehicleNumber,
+  v.VehicleVin,
+
+  ROUND(SUM(IIf(IsNull(se.TotalWorkTime), 0, se.TotalWorkTime)), 2)  AS WorkHours,
+  ROUND(SUM(IIf(IsNull(se.TotalLunchTime), 0, se.TotalLunchTime)), 2) AS LunchHours,
+  ROUND(SUM(IIf(IsNull(se.TotalDriveTime), 0, se.TotalDriveTime)), 2) AS DriveHours,
+
+  sl.StoreLocationID,
+  sl.StoreNumber,
+  sl.StoreState,
+  sl.StoreCity
+FROM ((Recap AS r
+LEFT JOIN Vehicle        AS v  ON v.VehicleID = r.VehicleID)
+LEFT JOIN StoreLocations AS sl ON sl.StoreLocationID = r.StoreLocationID)
+LEFT JOIN StartEnd       AS se ON se.RecapID = r.RecapID
+GROUP BY
+  r.RecapID, r.RecapWorkorderNumber, r.RecapDate, r.RecapDescription,
+  r.RecapState, r.RecapCity, r.RecapAssetNumber, r.RecapSerialNumber,
+  v.VehicleID, v.VehicleName, v.VehicleNumber, v.VehicleVin,
+  sl.StoreLocationID, sl.StoreNumber, sl.StoreState, sl.StoreCity
+ORDER BY r.RecapDate DESC, r.RecapID DESC;";
 
                 OleDbCommand cmd = new OleDbCommand(query, conn);
                 conn.Open();
@@ -76,9 +110,9 @@ namespace NewRecap.Pages.AdminPages
                             VehicleNumber = reader.IsDBNull(10) ? null : reader.GetInt32(10),
                             VehicleVin = reader.IsDBNull(11) ? null : reader.GetString(11),
 
-                            TotalWorkTime = reader.IsDBNull(12) ? 0.0 : Math.Round(reader.GetDouble(12), 2),
-                            TotalLunchTime = reader.IsDBNull(13) ? 0.0 : Math.Round(reader.GetDouble(13), 2),
-                            TotalDriveTime = reader.IsDBNull(14) ? 0.0 : Math.Round(reader.GetDouble(14), 2),
+                            TotalWorkTime = reader.IsDBNull(12) ? 0.0 : Convert.ToDouble(reader[12]),
+                            TotalLunchTime = reader.IsDBNull(13) ? 0.0 : Convert.ToDouble(reader[13]),
+                            TotalDriveTime = reader.IsDBNull(14) ? 0.0 : Convert.ToDouble(reader[14]),
 
                             StoreLocationID = reader.IsDBNull(15) ? null : reader.GetInt32(15),
                             StoreNumber = reader.IsDBNull(16) ? null : reader.GetInt32(16),
