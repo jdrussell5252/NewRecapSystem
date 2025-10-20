@@ -53,10 +53,14 @@ namespace NewRecap.Pages.RecapAdder
                     cmdRecap.Parameters.AddWithValue("@RecapDate", NewRecap.RecapDate);
                     cmdRecap.Parameters.AddWithValue("@AddedBy", userId);
                     cmdRecap.Parameters.AddWithValue("@VehicleID", DBNull.Value);
-                    cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
-                    cmdRecap.Parameters.AddWithValue("@RecapAssetNumber", NewRecap.RecapAssetNumber);
-                    cmdRecap.Parameters.AddWithValue("@RecapSerialNumber", NewRecap.RecapSerialNumber);
-                    cmdRecap.Parameters.AddWithValue("@StoreLocation", SelectedStoreLocationID);
+                    cmdRecap.Parameters.AddWithValue("@RecapDescription", string.IsNullOrWhiteSpace(NewRecap.RecapDescription) ? DBNull.Value : NewRecap.RecapDescription);
+                    var pAsset = cmdRecap.Parameters.Add("@RecapAssetNumber", OleDbType.Integer);
+                    pAsset.Value = NewRecap.RecapAssetNumber.HasValue ? NewRecap.RecapAssetNumber.Value : DBNull.Value;
+                    cmdRecap.Parameters.AddWithValue("@RecapSerialNumber", string.IsNullOrWhiteSpace(NewRecap.RecapSerialNumber) ? DBNull.Value : NewRecap.RecapSerialNumber);
+                    //cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
+                    //cmdRecap.Parameters.AddWithValue("@RecapAssetNumber", NewRecap.RecapAssetNumber);
+                    //cmdRecap.Parameters.AddWithValue("@RecapSerialNumber", NewRecap.RecapSerialNumber);
+                    cmdRecap.Parameters.AddWithValue("@StoreLocationID", SelectedStoreLocationID);
                     cmdRecap.ExecuteNonQuery();
 
                     int RecapID;

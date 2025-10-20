@@ -13,7 +13,7 @@
         public DateTime? RecapDate { get; set; }
         public int? RecapWorkorderNumber { get; set; }
         public int? RecapAssetNumber { get; set; }
-        public int? RecapSerialNumber { get; set; }
+        public string? RecapSerialNumber { get; set; }
 
 
     }// End of 'RecapInfo' Class.

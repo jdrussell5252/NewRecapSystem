@@ -50,7 +50,6 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    //int LocationID = NewRecap.LocationID;
                     string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapState, RecapCity) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapState, @RecapCity);";
                     OleDbCommand cmdRecap = new OleDbCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);

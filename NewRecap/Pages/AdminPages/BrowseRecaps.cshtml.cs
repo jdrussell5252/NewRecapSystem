@@ -68,7 +68,7 @@ namespace NewRecap.Pages.AdminPages
                             RecapState = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                             RecapCity = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
 
-                            RecapAssetNumber = reader.GetInt32(6),
+                            RecapAssetNumber = reader.IsDBNull(6) ? null : reader.GetInt32(6),
                             RecapSerialNumber = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
 
                             VehicleID = reader.IsDBNull(8) ? null : reader.GetInt32(8),
