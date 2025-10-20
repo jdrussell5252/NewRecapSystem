@@ -9,9 +9,9 @@
         public double TotalWorkTime { get; set; }
         public double TotalDriveTime { get; set; }
         public double TotalLunchTime { get; set; }
-        public string RecapState { get; set; }
-        public string RecapCity { get; set; }
-        public string RecapDescription { get; set; }
+        public string? RecapState { get; set; }
+        public string? RecapCity { get; set; }
+        public string? RecapDescription { get; set; }
         public List<string> RecapEmployees { get; set; } = new List<string>();
 
 

@@ -19,7 +19,7 @@ namespace NewRecap.Pages.RecapAdder
         public bool IsAdmin { get; set; }
         public List<EmployeeInfo> Employees { get; set; } = new List<EmployeeInfo>();
         public List<SelectListItem> Vehicles { get; set; } = new List<SelectListItem>();
-        public int SelectedVehicleID { get; set; }
+        public int? SelectedVehicleID { get; set; }
         public List<int> SelectedEmployeeIds { get; set; } = new();
         public List<WorkSegment> WorkSegments { get; set; }
 
@@ -65,8 +65,7 @@ namespace NewRecap.Pages.RecapAdder
                     cmdRecap.Parameters.AddWithValue("@RecapDate", NewRecap.RecapDate);
                     cmdRecap.Parameters.AddWithValue("@AddedBy", userId);
 
-                    var pAsset = cmdRecap.Parameters.Add("@VehicleID", OleDbType.Integer);
-                    pAsset.Value = NewRecap.VehicleID.HasValue ? NewRecap.VehicleID.Value : DBNull.Value;
+                    cmdRecap.Parameters.AddWithValue("@VehicleID", SelectedVehicleID);
 
                     cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
                     cmdRecap.Parameters.AddWithValue("@RecapState", NewRecap.RecapState);
