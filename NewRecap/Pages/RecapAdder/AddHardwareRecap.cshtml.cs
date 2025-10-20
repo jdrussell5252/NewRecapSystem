@@ -12,7 +12,7 @@ namespace NewRecap.Pages.RecapAdder
     [BindProperties]
     public class AddHardwareRecapModel : PageModel
     {
-        public Recap NewRecap { get; set; } = new Recap();
+        public HardwareRecap NewRecap { get; set; } = new HardwareRecap();
         public List<EmployeeInfo> Employees { get; set; } = new List<EmployeeInfo>();
         public List<SelectListItem> Locations { get; set; } = new List<SelectListItem>();
         public int SelectedStoreLocationID { get; set; }   // bind your <select> to this
@@ -39,6 +39,15 @@ namespace NewRecap.Pages.RecapAdder
 
         public IActionResult OnPost()
         {
+            // Validate employee selection
+            if (!SelectedEmployeeIds.Any())
+            {
+                ModelState.AddModelError("SelectedEmployeeIds", "Please select at least one employee.");
+            }
+            if (SelectedStoreLocationID <= 0)
+            {
+                ModelState.AddModelError("SelectedStoreLocationID", "Please select a store location.");
+            }
             if (ModelState.IsValid)
             {
                 int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -46,7 +55,6 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    //int LocationID = NewRecap.LocationID;
                     string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapAssetNumber, RecapSerialNumber, StoreLocationID) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID);";
                     OleDbCommand cmdRecap = new OleDbCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
@@ -57,9 +65,6 @@ namespace NewRecap.Pages.RecapAdder
                     var pAsset = cmdRecap.Parameters.Add("@RecapAssetNumber", OleDbType.Integer);
                     pAsset.Value = NewRecap.RecapAssetNumber.HasValue ? NewRecap.RecapAssetNumber.Value : DBNull.Value;
                     cmdRecap.Parameters.AddWithValue("@RecapSerialNumber", string.IsNullOrWhiteSpace(NewRecap.RecapSerialNumber) ? DBNull.Value : NewRecap.RecapSerialNumber);
-                    //cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
-                    //cmdRecap.Parameters.AddWithValue("@RecapAssetNumber", NewRecap.RecapAssetNumber);
-                    //cmdRecap.Parameters.AddWithValue("@RecapSerialNumber", NewRecap.RecapSerialNumber);
                     cmdRecap.Parameters.AddWithValue("@StoreLocationID", SelectedStoreLocationID);
                     cmdRecap.ExecuteNonQuery();
 
@@ -117,9 +122,15 @@ namespace NewRecap.Pages.RecapAdder
             }
             else
             {
-
-                PopulateEmployeeList();
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
+                {
+                    int userId = int.Parse(userIdClaim.Value);
+                    CheckIfUserIsAdmin(userId);
+                }
                 PopulateLocationList();
+                PopulateEmployeeList();
+
                 return Page();
             }
         }// End of 'OnPost'.

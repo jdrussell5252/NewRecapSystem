@@ -2,21 +2,17 @@
 
 namespace NewRecap.Model
 {
-    public class Recap
+    public class HardwareRecap
     {
+        public int? StoreNumber { get; set; }
         public List<WorkSegment> WorkSegments { get; set; } = new List<WorkSegment>();
-        [Required(ErrorMessage = "Recap City is required.")]
-        public string? RecapCity { get; set; }
-        [Required(ErrorMessage = "Recap State is required.")]
-        public string? RecapState { get; set; }
-        public int? VehicleID { get; set; }
         [Required(ErrorMessage = "Recap Description is required.")]
         public string RecapDescription { get; set; }
         [Required(ErrorMessage = "Recap Date is required.")]
         public DateTime? RecapDate { get; set; }
         [Required(ErrorMessage = "Workorder Number is required.")]
         public int? RecapWorkorderNumber { get; set; }
-
-
-    }// End of 'Recap' Class.
-}// End of 'NewRecap.Model'.
+        public int? RecapAssetNumber { get; set; }
+        public string? RecapSerialNumber { get; set; }
+    }
+}

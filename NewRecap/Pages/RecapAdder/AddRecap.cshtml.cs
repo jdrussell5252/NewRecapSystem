@@ -19,6 +19,7 @@ namespace NewRecap.Pages.RecapAdder
         public bool IsAdmin { get; set; }
         public List<EmployeeInfo> Employees { get; set; } = new List<EmployeeInfo>();
         public List<SelectListItem> Vehicles { get; set; } = new List<SelectListItem>();
+        public int SelectedVehicleID { get; set; }
         public List<int> SelectedEmployeeIds { get; set; } = new();
         public List<WorkSegment> WorkSegments { get; set; }
 
@@ -27,7 +28,6 @@ namespace NewRecap.Pages.RecapAdder
 
         public void OnGet()
         {
-            //PopulateLocationList();
             /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -43,6 +43,15 @@ namespace NewRecap.Pages.RecapAdder
 
         public IActionResult OnPost()
         {
+                        // Validate employee selection
+            if (!SelectedEmployeeIds.Any())
+            {
+                ModelState.AddModelError("SelectedEmployeeIds", "Please select at least one employee.");
+            }
+            if (SelectedVehicleID <= 0)
+            {
+                ModelState.AddModelError("SelectedVehicleID", "Please select a Vehicle.");
+            }
             if(ModelState.IsValid)
             {
                 int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -55,7 +64,10 @@ namespace NewRecap.Pages.RecapAdder
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
                     cmdRecap.Parameters.AddWithValue("@RecapDate", NewRecap.RecapDate);
                     cmdRecap.Parameters.AddWithValue("@AddedBy", userId);
-                    cmdRecap.Parameters.AddWithValue("@VehicleID", NewRecap.VehicleID);
+
+                    var pAsset = cmdRecap.Parameters.Add("@VehicleID", OleDbType.Integer);
+                    pAsset.Value = NewRecap.VehicleID.HasValue ? NewRecap.VehicleID.Value : DBNull.Value;
+
                     cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
                     cmdRecap.Parameters.AddWithValue("@RecapState", NewRecap.RecapState);
                     cmdRecap.Parameters.AddWithValue("@RecapCity", NewRecap.RecapCity);
@@ -125,9 +137,15 @@ namespace NewRecap.Pages.RecapAdder
             }
             else
             {
-
-                PopulateEmployeeList();
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
+                {
+                    int userId = int.Parse(userIdClaim.Value);
+                    CheckIfUserIsAdmin(userId);
+                }
                 PopulateVehicleList();
+                PopulateEmployeeList();
+
                 return Page();
             }
         }// End of 'OnPost'.

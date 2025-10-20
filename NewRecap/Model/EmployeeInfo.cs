@@ -1,4 +1,6 @@
-﻿namespace NewRecap.Model
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace NewRecap.Model
 {
     public class EmployeeInfo
     {

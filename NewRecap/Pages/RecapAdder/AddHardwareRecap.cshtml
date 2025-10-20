@@ -19,9 +19,9 @@
             @foreach (var g in Model.Employees)
             {
                 <input type="checkbox" value="@g.EmployeeID" class="form-check-input" name="SelectedEmployeeIDs" checked="@g.IsSelected" />
-                <label class="form-label" id="LabelText">@g.EmployeeFName</label>
-                <label class="form-label" id="LabelText">@g.EmployeeLName</label>
+                <label class="form-label" id="LabelText">@g.EmployeeFName @g.EmployeeLName</label>
             }
+            <span asp-validation-for="SelectedEmployeeIds" class="text-danger"></span>
         </div>
     </div>
     <!--End of Employee Checkboxs-->
@@ -50,16 +50,13 @@
 
     <!--Store Location DropDown-->
     <div class="col-6 mt-2">
-        <label asp-for="NewRecap" class="form-label" id="LabelText">Store Location:</label>
+        <label asp-for="SelectedStoreLocationID" class="form-label" id="LabelText">Store Location:</label>
     </div>
     <div class="col-12">
         <select asp-for="SelectedStoreLocationID" asp-items="Model.Locations" class="form-control">
-        <!--
-        <select asp-for="NewRecap.StoreNumber" asp-items="Model.Locations" class="form-control">
-            -->
-            <option value="">---Select Location---</option>
+            <option value="0">---Select Location---</option>
         </select>
-        <span asp-validation-for="NewRecap.StoreNumber" class="text-danger"></span>
+        <span asp-validation-for="SelectedStoreLocationID" class="text-danger"></span>
     </div>
     <!--End of Store Location DropDown-->
 

@@ -19,9 +19,9 @@
             @foreach (var g in Model.Employees)
             {
                 <input type="checkbox" value="@g.EmployeeID" class="form-check-input" name="SelectedEmployeeIDs" value="@g.EmployeeID" checked="@g.IsSelected" />
-                <label class="form-label" id="LabelText">@g.EmployeeFName</label>
-                <label class="form-label" id="LabelText">@g.EmployeeLName</label>
+                <label class="form-label" id="LabelText">@g.EmployeeFName @g.EmployeeLName</label>
             }
+            <span asp-validation-for="SelectedEmployeeIds" class="text-danger"></span>
         </div>
     </div>
     <!--End of Employee Checkboxs-->
@@ -80,13 +80,13 @@
     
     <!--Vehicle DropDown-->
     <div class="col-6 mt-2">
-        <label asp-for="NewRecap" class="form-label" id="LabelText">Vehicle Used:</label>
+        <label asp-for="SelectedVehicleID" class="form-label" id="LabelText">Vehicle Used:</label>
     </div>
     <div class="col-12">
-        <select asp-for="NewRecap.VehicleID" asp-items="Model.Vehicles" class="form-control">
-            <option value="">---Select Vehicle---</option>
+        <select asp-for="SelectedVehicleID" asp-items="Model.Vehicles" class="form-control">
+            <option value="0">---Select Vehicle---</option>
         </select>
-        <span asp-validation-for="NewRecap.VehicleID" class="text-danger"></span>
+        <span asp-validation-for="SelectedVehicleID" class="text-danger"></span>
     </div>
     <!--End of Vehicle DropDown-->
 
