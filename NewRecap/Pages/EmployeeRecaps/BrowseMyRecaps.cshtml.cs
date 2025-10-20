@@ -4,49 +4,25 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using NewRecap.Model;
 using System.Data.OleDb;
 using System.Security.Claims;
-using System.Text.RegularExpressions;
 
-namespace NewRecap.Pages.AdminPages
+namespace NewRecap.Pages.EmployeeRecaps
 {
     [Authorize]
-    public class BrowseRecapsModel : PageModel
+    public class BrowseMyRecapsModel : PageModel
     {
         public List<RecapView> Recaps { get; set; } = new List<RecapView>();
-        public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
         public void OnGet()
         {
-            /*--------------------ADMIN PRIV----------------------*/
-            // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
-                CheckIfUserIsAdmin(userId);
-                PopulateRecapList();
+                PopulateRecapList(userId);
             }
-            /*--------------------ADMIN PRIV----------------------*/
         }
 
-        public IActionResult OnPostDelete(int id)
-        {
-            // delete the book from the database
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
-            {
-                conn.Open();
-
-
-                string deleteCmdText = "DELETE FROM Recap WHERE RecapID = @RecapID";
-                OleDbCommand deleteCmd = new OleDbCommand(deleteCmdText, conn);
-                deleteCmd.Parameters.AddWithValue("@RecapID", id);
-                deleteCmd.ExecuteNonQuery();
-
-            }
-
-            return RedirectToPage();
-        }//End of 'OnPostDelete'.
-
-        private void PopulateRecapList()
+        private void PopulateRecapList(int id)
         {
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
@@ -56,6 +32,7 @@ namespace NewRecap.Pages.AdminPages
                 r.RecapID,
   r.RecapWorkorderNumber,
   r.RecapDate,
+  r.AddedBy,
   r.RecapDescription,
   r.RecapState,
   r.RecapCity,
@@ -76,18 +53,21 @@ namespace NewRecap.Pages.AdminPages
   sl.StoreNumber,
   sl.StoreState,
   sl.StoreCity
-FROM ((Recap AS r
+FROM ((((Recap AS r
 LEFT JOIN Vehicle        AS v  ON v.VehicleID = r.VehicleID)
 LEFT JOIN StoreLocations AS sl ON sl.StoreLocationID = r.StoreLocationID)
-LEFT JOIN StartEnd       AS se ON se.RecapID = r.RecapID
+LEFT JOIN StartEnd       AS se ON se.RecapID = r.RecapID)
+LEFT JOIN EmployeeRecaps AS er ON er.RecapID = r.RecapID)
+WHERE r.AddedBy = @AddedBy
 GROUP BY
-  r.RecapID, r.RecapWorkorderNumber, r.RecapDate, r.RecapDescription,
+  r.RecapID, r.RecapWorkorderNumber, r.RecapDate, r.AddedBy, r.RecapDescription,
   r.RecapState, r.RecapCity, r.RecapAssetNumber, r.RecapSerialNumber,
   v.VehicleID, v.VehicleName, v.VehicleNumber, v.VehicleVin,
   sl.StoreLocationID, sl.StoreNumber, sl.StoreState, sl.StoreCity
 ORDER BY r.RecapDate DESC, r.RecapID DESC;";
 
                 OleDbCommand cmd = new OleDbCommand(query, conn);
+                cmd.Parameters.AddWithValue("@AddedBy", id);
                 conn.Open();
                 OleDbDataReader reader = cmd.ExecuteReader();
                 if (reader.HasRows)
@@ -99,27 +79,28 @@ ORDER BY r.RecapDate DESC, r.RecapID DESC;";
                             RecapID = reader.GetInt32(0),
                             RecapWorkorderNumber = reader.GetInt32(1),
                             RecapDate = reader.GetDateTime(2),
-                            RecapDescription = reader.GetString(3),
-                            RecapState = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                            RecapCity = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                            AddedBy = id,
+                            RecapDescription = reader.GetString(4),
+                            RecapState = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                            RecapCity = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
 
-                            RecapAssetNumber = reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                            RecapSerialNumber = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            RecapAssetNumber = reader.IsDBNull(7) ? null : reader.GetInt32(7),
+                            RecapSerialNumber = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
 
-                            VehicleID = reader.IsDBNull(8) ? null : reader.GetInt32(8),
-                            VehicleName = reader.IsDBNull(9) ? null : reader.GetString(9),
-                            VehicleNumber = reader.IsDBNull(10) ? null : reader.GetInt32(10),
-                            VehicleVin = reader.IsDBNull(11) ? null : reader.GetString(11),
+                            VehicleID = reader.IsDBNull(9) ? null : reader.GetInt32(9),
+                            VehicleName = reader.IsDBNull(10) ? null : reader.GetString(10),
+                            VehicleNumber = reader.IsDBNull(11) ? null : reader.GetInt32(11),
+                            VehicleVin = reader.IsDBNull(12) ? null : reader.GetString(12),
 
-                            TotalWorkTime = reader.IsDBNull(12) ? 0.0 : Math.Round(reader.GetDouble(12), 2),
-                            TotalLunchTime = reader.IsDBNull(13) ? 0.0 : Math.Round(reader.GetDouble(13), 2),
-                            TotalDriveTime = reader.IsDBNull(14) ? 0.0 : Math.Round(reader.GetDouble(14), 2),
-                            TotalTime = reader.IsDBNull(15) ? 0.0 : Math.Round(reader.GetDouble(15), 2),
+                            TotalWorkTime = reader.IsDBNull(13) ? 0.0 : Math.Round(reader.GetDouble(13), 2),
+                            TotalLunchTime = reader.IsDBNull(14) ? 0.0 : Math.Round(reader.GetDouble(14), 2),
+                            TotalDriveTime = reader.IsDBNull(15) ? 0.0 : Math.Round(reader.GetDouble(15), 2),
+                            TotalTime = reader.IsDBNull(16) ? 0.0 : Math.Round(reader.GetDouble(16), 2),
 
-                            StoreLocationID = reader.IsDBNull(16) ? null : reader.GetInt32(16),
-                            StoreNumber = reader.IsDBNull(17) ? null : reader.GetInt32(17),
-                            StoreState = reader.IsDBNull(18) ? null : reader.GetString(18),
-                            StoreCity = reader.IsDBNull(19) ? null : reader.GetString(19),
+                            StoreLocationID = reader.IsDBNull(17) ? null : reader.GetInt32(17),
+                            StoreNumber = reader.IsDBNull(18) ? null : reader.GetInt32(18),
+                            StoreState = reader.IsDBNull(19) ? null : reader.GetString(19),
+                            StoreCity = reader.IsDBNull(20) ? null : reader.GetString(20),
 
 
 
@@ -157,42 +138,5 @@ ORDER BY r.RecapDate DESC, r.RecapID DESC;";
             }
             return Employees;
         }
-
-        /*--------------------ADMIN PRIV----------------------*/
-        private void CheckIfUserIsAdmin(int userId)
-        {
-            using (var conn = new OleDbConnection(this.connectionString))
-            {
-                // Adjust names to match your schema exactly:
-                // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = ?;";
-
-                using (var cmd = new OleDbCommand(query, conn))
-                {
-                    // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.Add("@?", OleDbType.Integer).Value = userId;
-
-                    conn.Open();
-                    var roleObj = cmd.ExecuteScalar();
-
-                    // Handle both null and DBNull
-                    if (roleObj != null && roleObj != DBNull.Value)
-                    {
-                        int role = Convert.ToInt32(roleObj);
-
-                        // If your schema uses AccountTypeID (1=user, 2=admin), adjust accordingly
-                        this.IsAdmin = (role == 2);
-                        ViewData["IsAdmin"] = this.IsAdmin;
-                    }
-                    else
-                    {
-                        // No row or NULL role
-                        this.IsAdmin = false;
-                        ViewData["IsAdmin"] = false;
-                    }
-                }
-            }
-        }//End of 'CheckIfUserIsAdmin'.
-        /*--------------------ADMIN PRIV----------------------*/
     }
 }

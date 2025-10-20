@@ -9,6 +9,7 @@
         public double TotalWorkTime { get; set; }
         public double TotalDriveTime { get; set; }
         public double TotalLunchTime { get; set; }
+        public double TotalTime { get; set; }
         public string? RecapState { get; set; }
         public string? RecapCity { get; set; }
         public string? RecapDescription { get; set; }
@@ -27,5 +28,7 @@
         public int? StoreNumber { get; set; }
         public string? StoreState { get; set; }
         public string? StoreCity { get; set; }
+
+        public int? AddedBy { get; set; }
     }
 }

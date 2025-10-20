@@ -1,11 +1,11 @@
 ﻿@page
-@model NewRecap.Pages.AdminPages.BrowseRecapsModel
+@model NewRecap.Pages.EmployeeRecaps.BrowseMyRecapsModel
 @{
 }
 
 <div class="row text-center">
     <div class="col-12">
-        <label class="form-label fs-1" id="LabelText">Browse Recaps</label>
+        <label class="form-label fs-1" id="LabelText">Browse My Recaps</label>
     </div>
 </div>
 
@@ -46,7 +46,7 @@
             <div class="row my-2">
                 <div class="col-8">
                     <label class="form-label" id="LabelText" asp-for="@recap.RecapCity">Recap City:</label>
-                <label class="form-label" id="LabelText">@recap.RecapCity</label>
+                    <label class="form-label" id="LabelText">@recap.RecapCity</label>
                 </div>
             </div>
 
@@ -107,7 +107,7 @@
             </div>
 
             <div class="col">
-            <label class="form-label" id="LabelText" asp-for="@recap.RecapEmployees">Employees:</label>
+                <label class="form-label" id="LabelText" asp-for="@recap.RecapEmployees">Employees:</label>
                 @foreach (var employees in recap.RecapEmployees)
                 {
                     <span class="badge bg-secondary"> @employees</span>
@@ -115,9 +115,6 @@
             </div>
 
         </div>
-        <form method="post" enctype=" multipart /form-data">
-            <button onclick="return confirm('Are you sure?')" class="btn btn-danger" asp-route-id="@recap.RecapID" asp-page-handler="Delete">Delete</button>
-        </form>
         <hr style="border: 1px solid white; opacity: 1;" />
 
     }

@@ -45,6 +45,13 @@
                                     <a class="nav-link text-white" asp-area="" asp-page="/AdminPages/BrowseRecaps">Recaps</a>
                                 </li>
                             }
+
+                            @if (!isAdmin)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-white" asp-area="" asp-page="/EmployeeRecaps/BrowseMyRecaps">Browse My Recaps</a>
+                                </li>
+                            }
                             <!--END OF ADMINPAGES-->
                         }
                         <!--End of Left Nav-->                      
