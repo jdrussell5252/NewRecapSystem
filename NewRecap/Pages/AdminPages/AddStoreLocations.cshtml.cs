@@ -12,7 +12,6 @@ namespace NewRecap.Pages.AdminPages
     {
         [BindProperty]
         public MyLocations NewLocation { get; set; }
-        public LocationView Locations { get; set; } = new LocationView();
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
         public void OnGet()
@@ -35,21 +34,6 @@ namespace NewRecap.Pages.AdminPages
                 {
 
                     conn.Open();
-
-                    string cmdText = "SELECT Count(*) FROM StoreLocations WHERE StoreNumber = @StoreNumber AND StoreState = @StoreState AND StoreCity = @StoreCity;";
-                    OleDbCommand checkCmd = new OleDbCommand(cmdText, conn);
-                    checkCmd.Parameters.AddWithValue("@StoreLocationID", NewLocation.StoreNumber);
-                    checkCmd.Parameters.AddWithValue("@StoreState", NewLocation.StoreState);
-                    checkCmd.Parameters.AddWithValue("@StoreCity", NewLocation.StoreCity);
-                    
-                    /*
-                    int Count = (int)checkCmd.ExecuteScalar();
-                    if (Count > 0)
-                    {
-                        ModelState.AddModelError(string.Empty, "This location already exists.");
-                        return RedirectToPage("BrowseStoreLocations");
-                    }
-                    */
                     
 
                     string insertcmdText = "INSERT INTO StoreLocations (StoreNumber, StoreState, StoreCity) VALUES (@StoreNumber, @StoreState, @StoreCity);";

@@ -53,10 +53,13 @@
         <label asp-for="NewRecap" class="form-label" id="LabelText">Store Location:</label>
     </div>
     <div class="col-12">
-        <select asp-for="NewRecap.LocationID" asp-items="Model.Locations" class="form-control">
+        <select asp-for="SelectedStoreLocationID" asp-items="Model.Locations" class="form-control">
+        <!--
+        <select asp-for="NewRecap.StoreNumber" asp-items="Model.Locations" class="form-control">
+            -->
             <option value="">---Select Location---</option>
         </select>
-        <span asp-validation-for="NewRecap.LocationID" class="text-danger"></span>
+        <span asp-validation-for="NewRecap.StoreNumber" class="text-danger"></span>
     </div>
     <!--End of Store Location DropDown-->
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using NewRecap.Model;
 using System.Data.OleDb;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace NewRecap.Pages.AdminPages
 {
@@ -49,7 +50,8 @@ namespace NewRecap.Pages.AdminPages
         {
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT RecapID, RecapWorkorderNumber, RecapDate, RecapDescription, RecapState, RecapCity FROM Recap";
+                string query = "SELECT r.RecapID, r.RecapWorkorderNumber, r.RecapDate, r.RecapDescription, r.RecapState, r.RecapCity, r.RecapAssetNumber, r.RecapSerialNumber, v.VehicleID, v.VehicleName, v.VehicleNumber, v.VehicleVin, se.TotalWorkTime, se.TotalLunchTime, se.TotalDriveTime, sl.StoreLocationID, sl.StoreNumber, sl.StoreState, sl.StoreCity FROM ((Recap AS r LEFT JOIN Vehicle AS v ON v.VehicleID = r.VehicleID) LEFT JOIN StoreLocations AS sl ON sl.StoreLocationID = r.StoreLocationID) LEFT JOIN StartEnd AS se ON se.RecapID = r.RecapID ORDER BY r.RecapDate DESC, r.RecapID DESC;";
+
                 OleDbCommand cmd = new OleDbCommand(query, conn);
                 conn.Open();
                 OleDbDataReader reader = cmd.ExecuteReader();
@@ -65,21 +67,40 @@ namespace NewRecap.Pages.AdminPages
                             RecapDescription = reader.GetString(3),
                             RecapState = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                             RecapCity = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                            RecapEmployees = PopulateRecapEmployees(reader.GetInt32(0))
+
+                            RecapAssetNumber = reader.GetInt32(6),
+                            RecapSerialNumber = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+
+                            VehicleID = reader.IsDBNull(8) ? null : reader.GetInt32(8),
+                            VehicleName = reader.IsDBNull(9) ? null : reader.GetString(9),
+                            VehicleNumber = reader.IsDBNull(10) ? null : reader.GetInt32(10),
+                            VehicleVin = reader.IsDBNull(11) ? null : reader.GetString(11),
+
+                            TotalWorkTime = reader.IsDBNull(12) ? 0.0 : Math.Round(reader.GetDouble(12), 2),
+                            TotalLunchTime = reader.IsDBNull(13) ? 0.0 : Math.Round(reader.GetDouble(13), 2),
+                            TotalDriveTime = reader.IsDBNull(14) ? 0.0 : Math.Round(reader.GetDouble(14), 2),
+
+                            StoreLocationID = reader.IsDBNull(15) ? null : reader.GetInt32(15),
+                            StoreNumber = reader.IsDBNull(16) ? null : reader.GetInt32(16),
+                            StoreState = reader.IsDBNull(17) ? null : reader.GetString(17),
+                            StoreCity = reader.IsDBNull(18) ? null : reader.GetString(18),
+
+
+                            RecapEmployees = PopulateRecapEmployees(reader.GetInt32(0)),
                         };
                         Recaps.Add(ARecap);
 
                     }
                 }
             }
-        }//End of 'PopulateLocationList'.
+        }//End of 'PopulateRecapList'.
 
         private List<string> PopulateRecapEmployees(int recapID)
         {
             List<string> Employees = new List<string>();
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT e.EmployeeFName " +
+                string query = "SELECT e.EmployeeFName, e.EmployeeLName " +
                                "FROM Employee AS e " +
                                "INNER JOIN EmployeeRecaps AS er ON e.EmployeeID = er.EmployeeID " +
                                "WHERE er.RecapID = @RecapID";
@@ -91,7 +112,9 @@ namespace NewRecap.Pages.AdminPages
                 {
                     while (reader.Read())
                     {
-                        Employees.Add(reader.GetString(0));
+                        string fName = reader.IsDBNull(0) ? "" : reader.GetString(0);
+                        string lName = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                        Employees.Add($"{fName} {lName}");
                     }
                 }
             }

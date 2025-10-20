@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NewRecap.Model;
 using System.Data.OleDb;
 using System.Security.Claims;
 
@@ -7,6 +8,8 @@ namespace NewRecap.Pages.AdminPages
 {
     public class AddVehicleModel : PageModel
     {
+        [BindProperty]
+        public MyVehicles NewVehicles { get; set; }
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
         public void OnGet()
@@ -20,6 +23,31 @@ namespace NewRecap.Pages.AdminPages
                 CheckIfUserIsAdmin(userId);
             }
             /*--------------------ADMIN PRIV----------------------*/
+        }
+
+        public IActionResult OnPost(int id)
+        {
+            if (ModelState.IsValid)
+            {
+                using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+                {
+
+                    conn.Open();
+
+
+
+                    string insertcmdText = "INSERT INTO Vehicle (VehicleNumber, VehicleVin, VehicleName) VALUES (@VehicleNumber, @VehicleVin, @VehicleName);";
+                    OleDbCommand insertcmd = new OleDbCommand(insertcmdText, conn);
+                    insertcmd.Parameters.AddWithValue("@VehicleNumber", NewVehicles.VehicleNumber);
+                    insertcmd.Parameters.AddWithValue("@VehicleVin", NewVehicles.VehicleVin);
+                    insertcmd.Parameters.AddWithValue("@VehicleName", NewVehicles.VehicleName);
+
+                    insertcmd.ExecuteNonQuery();
+                }
+                return RedirectToPage("BrowseVehicles");
+            }
+            // If the model state is not valid, return to the same page with validation errors
+            return Page();
         }
 
         /*--------------------ADMIN PRIV----------------------*/

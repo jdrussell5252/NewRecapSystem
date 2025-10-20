@@ -15,6 +15,8 @@ namespace NewRecap.Pages.RecapAdder
         public Recap NewRecap { get; set; } = new Recap();
         public List<EmployeeInfo> Employees { get; set; } = new List<EmployeeInfo>();
         public List<SelectListItem> Locations { get; set; } = new List<SelectListItem>();
+        public int SelectedStoreLocationID { get; set; }   // bind your <select> to this
+        public List<int> SelectedEmployeeIds { get; set; } = new();
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
 
@@ -39,10 +41,79 @@ namespace NewRecap.Pages.RecapAdder
         {
             if (ModelState.IsValid)
             {
-                return RedirectToAction("/Index");
+                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+                {
+                    conn.Open();
+
+                    //int LocationID = NewRecap.LocationID;
+                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapAssetNumber, RecapSerialNumber, StoreLocationID) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID);";
+                    OleDbCommand cmdRecap = new OleDbCommand(cmdTextRecap, conn);
+                    cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
+                    cmdRecap.Parameters.AddWithValue("@RecapDate", NewRecap.RecapDate);
+                    cmdRecap.Parameters.AddWithValue("@AddedBy", userId);
+                    cmdRecap.Parameters.AddWithValue("@VehicleID", DBNull.Value);
+                    cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
+                    cmdRecap.Parameters.AddWithValue("@RecapAssetNumber", NewRecap.RecapAssetNumber);
+                    cmdRecap.Parameters.AddWithValue("@RecapSerialNumber", NewRecap.RecapSerialNumber);
+                    cmdRecap.Parameters.AddWithValue("@StoreLocation", SelectedStoreLocationID);
+                    cmdRecap.ExecuteNonQuery();
+
+                    int RecapID;
+                    // Now fetch the generated AutoNumber (RecapID)
+                    using (var idCmd = new OleDbCommand("SELECT @@IDENTITY;", conn))
+                    {
+                        RecapID = Convert.ToInt32(idCmd.ExecuteScalar());
+                    }
+
+                    foreach (var empId in SelectedEmployeeIds)
+                    {
+
+                        string cmdTextEmployeeRecap = "INSERT INTO EmployeeRecaps (RecapID, EmployeeID) VALUES (@RecapID, @EmployeeID)";
+                        OleDbCommand cmdEmployeeRecap = new OleDbCommand(cmdTextEmployeeRecap, conn);
+                        cmdEmployeeRecap.Parameters.AddWithValue("@RecapID", RecapID);
+                        cmdEmployeeRecap.Parameters.AddWithValue("@EmployeeID", empId);
+                        cmdEmployeeRecap.ExecuteNonQuery();
+                        // For each segment that has at least one valid start/end pair
+                        var segments = NewRecap.WorkSegments.Where(s =>
+                            (s.WorkStart.HasValue && s.WorkEnd.HasValue) ||
+                            (s.LunchStart.HasValue && s.LunchEnd.HasValue));
+
+                        foreach (var seg in segments)
+                        {
+                            const string sql = @"
+                            INSERT INTO StartEnd
+                            (RecapID, EmployeeID,
+                            StartTime, EndTime, StartTimeDate, EndTimeDate, StartLunchTime, EndLunchTime, StartLunchDate, EndLunchDate)
+                            VALUES
+                            (@RecapID, @EmployeeID,
+                            @StartTime, @EndTime, @StartTimeDate, @EndTimeDate, @StartLunchTime, @EndLunchTime, @StartLunchDate, @EndLunchDate);";
+
+                            using var cmd = new OleDbCommand(sql, conn);
+
+                            // IMPORTANT: OleDb uses positional parameters — add in the same order as the SQL
+                            cmd.Parameters.Add("@RecapID", OleDbType.Integer).Value = RecapID;
+                            cmd.Parameters.Add("@EmployeeID", OleDbType.Integer).Value = empId;
+
+                            cmd.Parameters.AddWithValue("@StartTime", (object?)seg.WorkStart ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndTime", (object?)seg.WorkEnd ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@StartTimeDate", (object?)seg.WorkStartDate ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndTimeDate", (object?)seg.WorkEndDate ?? DBNull.Value);
+
+                            cmd.Parameters.AddWithValue("@StartLunchTime", (object?)seg.LunchStart ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndLunchTime", (object?)seg.LunchEnd ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@StartLunchDate", (object?)seg.LunchStartDate ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EndLunchDate", (object?)seg.LunchEndDate ?? DBNull.Value);
+
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                return RedirectToPage("/Index");
             }
             else
             {
+
                 PopulateEmployeeList();
                 PopulateLocationList();
                 return Page();

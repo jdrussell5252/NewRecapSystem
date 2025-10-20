@@ -6,12 +6,26 @@
         public int RecapWorkorderNumber { get; set; }
         public DateTime RecapDate { get; set; }
         public List<string> EmployeeName { get; set; } = new List<string>();
-        public DateTime TotalWorkTime { get; set; }
-        public DateTime TotalDriveTime { get; set; }
-        public DateTime TotalLunchTime { get; set; }
+        public double TotalWorkTime { get; set; }
+        public double TotalDriveTime { get; set; }
+        public double TotalLunchTime { get; set; }
         public string RecapState { get; set; }
         public string RecapCity { get; set; }
         public string RecapDescription { get; set; }
         public List<string> RecapEmployees { get; set; } = new List<string>();
+
+
+        public int? VehicleID { get; set; }
+        public int? VehicleNumber { get; set; }
+        public string? VehicleName { get; set; }
+        public string? VehicleVin { get; set; }
+
+        public int? RecapAssetNumber { get; set; }
+        public string? RecapSerialNumber { get; set; }
+
+        public int? StoreLocationID { get; set; }
+        public int? StoreNumber { get; set; }
+        public string? StoreState { get; set; }
+        public string? StoreCity { get; set; }
     }
 }

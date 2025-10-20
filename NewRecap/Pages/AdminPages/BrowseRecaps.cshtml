@@ -51,23 +51,72 @@
             </div>
 
             <div class="row my-2">
-                <div class="col-4">
-                    <label class="form-label" id="LabelText" asp-for="@recap.RecapEmployees">Employees:</label>
-                </div>
-                <div class="col">
-                    @foreach (var employees in recap.RecapEmployees)
-                    {
-                        <span class="badge bg-secondary"> @employees</span>
-                    }
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.VehicleNumber">Vehicle Number:</label>
+                    <label class="form-label" id="LabelText">@recap.VehicleNumber</label>
+
+                    <label class="form-label" id="LabelText" asp-for="@recap.VehicleVin">| Vehicle Vin:</label>
+                    <label class="form-label" id="LabelText">@recap.VehicleVin</label>
+
+                    <label class="form-label" id="LabelText" asp-for="@recap.VehicleName">| Vehicle Name:</label>
+                    <label class="form-label" id="LabelText">@recap.VehicleName</label>
                 </div>
             </div>
-        </div>
-            <form method="post" enctype=" multipart /form-data">
 
-                <button onclick="return confirm('Are you sure?')" class="btn btn-danger" asp-route-id="@recap.RecapID" asp-page-handler="Delete">Delete</button>
-            </form>
-        
-        <hr />
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.TotalWorkTime">Total Work Time:</label>
+                    <label class="form-label" id="LabelText">@recap.TotalWorkTime</label>
+
+                    <label class="form-label" id="LabelText" asp-for="@recap.TotalLunchTime">| Total Lunch Time:</label>
+                    <label class="form-label" id="LabelText">@recap.TotalLunchTime</label>
+
+                    <label class="form-label" id="LabelText" asp-for="@recap.TotalDriveTime">| Total Drive Time:</label>
+                    <label class="form-label" id="LabelText">@recap.TotalDriveTime</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.StoreNumber">Store Number:</label>
+                    <label class="form-label" id="LabelText">@recap.StoreNumber</label>
+
+                    <label class="form-label" id="LabelText" asp-for="@recap.StoreCity">| Store City:</label>
+                    <label class="form-label" id="LabelText">@recap.StoreCity</label>
+
+                    <label class="form-label" id="LabelText" asp-for="@recap.StoreState">| Store State:</label>
+                    <label class="form-label" id="LabelText">@recap.StoreState</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.RecapAssetNumber">Recap Asset Number:</label>
+                    <label class="form-label" id="LabelText">@recap.RecapAssetNumber</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.RecapSerialNumber">Recap Serial Number:</label>
+                    <label class="form-label" id="LabelText">@recap.RecapSerialNumber</label>
+                </div>
+            </div>
+
+            <div class="col">
+            <label class="form-label" id="LabelText" asp-for="@recap.RecapEmployees">Employees:</label>
+                @foreach (var employees in recap.RecapEmployees)
+                {
+                    <span class="badge bg-secondary"> @employees</span>
+                }
+            </div>
+
+        </div>
+        <form method="post" enctype=" multipart /form-data">
+            <button onclick="return confirm('Are you sure?')" class="btn btn-danger" asp-route-id="@recap.RecapID" asp-page-handler="Delete">Delete</button>
+        </form>
+        <hr style="border: 1px solid white; opacity: 1;" />
+
     }
 }
 else

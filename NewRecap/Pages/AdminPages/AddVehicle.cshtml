@@ -8,3 +8,44 @@
         <label class="form-label fs-1" id="LabelText">Add Vehicle</label>
     </div>
 </div>
+
+<form method="post">
+    <div class="row">
+
+        <div class="row">
+            <div class="col-4">
+                <label asp-for="NewVehicles.VehicleNumber" class="form-label" id="LabelText">Vehicle Number:</label>
+            </div>
+            <div class="col-12">
+                <input asp-for="NewVehicles.VehicleNumber" type="text" class="form-control" />
+                <span asp-validation-for="NewVehicles.VehicleNumber" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-4">
+                <label asp-for="NewVehicles.VehicleVin" class="form-label" id="LabelText">Vehicle Vin:</label>
+            </div>
+            <div class="col-12">
+                <input asp-for="NewVehicles.VehicleVin" type="text" class="form-control" />
+                <span asp-validation-for="NewVehicles.VehicleVin" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-4">
+                <label asp-for="NewVehicles.VehicleName" class="form-label" id="LabelText">Vehicle Name:</label>
+            </div>
+            <div class="col-12">
+                <input asp-for="NewVehicles.VehicleName" type="text" class="form-control" />
+                <span asp-validation-for="NewVehicles.VehicleName" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row my-2">
+            <div class="col-12">
+                <button type="submit" class="form-control btn btn-primary"> Confirm </button>
+            </div>
+        </div>
+
+</form>

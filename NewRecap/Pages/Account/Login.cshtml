@@ -12,16 +12,16 @@
 <form method="post">
     <div class="row">
         <div class="col-4">
-            <label asp-for="LoginUser.Email" class="form-label" id="LabelText"></label>
+            <label asp-for="LoginUser.Username" class="form-label" id="LabelText">Username:</label>
         </div>
         <div class="col-12">
-            <input asp-for="LoginUser.Email" class="form-control" />
-            <span asp-validation-for="LoginUser.Email" class="text-danger"></span>
+            <input asp-for="LoginUser.Username" class="form-control" />
+            <span asp-validation-for="LoginUser.Username" class="text-danger"></span>
         </div>
     </div>
     <div class="row">
         <div class="col-4">
-            <label asp-for="LoginUser.Password" class="form-label" id="LabelText"></label>
+            <label asp-for="LoginUser.Password" class="form-label" id="LabelText">Password:</label>
         </div>
         <div class="col-12">
             <input asp-for="LoginUser.Password" type="password" class="form-control" />

@@ -26,9 +26,10 @@ namespace NewRecap.Pages.Account
                 // If the user does not exist, display an error message.
                 using (OleDbConnection conn = new OleDbConnection(this.connectionString))
                 {
-                    string cmdText = "SELECT * FROM [SystemUser] WHERE SystemUserEmail = @Email";
+                    string cmdText = "SELECT * FROM [SystemUser] WHERE SystemUsername = @SystemUsername";
+                    //string cmdText = "SELECT * FROM [SystemUser] WHERE SystemUserEmail = @Email";
                     OleDbCommand cmd = new OleDbCommand(cmdText, conn);
-                    cmd.Parameters.AddWithValue("@Email", LoginUser.Email);
+                    cmd.Parameters.AddWithValue("@SystemUsername", LoginUser.Username);
                     conn.Open();
                     OleDbDataReader reader = cmd.ExecuteReader();
                     if (reader.HasRows)
@@ -38,7 +39,7 @@ namespace NewRecap.Pages.Account
                         if (AppHelper.VerifyPassword(LoginUser.Password, passwordHash))
                         {
                             // create a email claim
-                            Claim emailClaim = new Claim(ClaimTypes.Email, LoginUser.Email);
+                            //Claim emailClaim = new Claim(ClaimTypes.Email, LoginUser.Email);
                             // create a user id claim
                             Claim userIdClaim = new Claim(ClaimTypes.NameIdentifier, reader.GetInt32(0).ToString());
                             // create a name claim
@@ -47,7 +48,8 @@ namespace NewRecap.Pages.Account
                             Claim roleClaim = new Claim(ClaimTypes.Role, reader.GetInt32(4).ToString());
 
                             // create a list of claims
-                            List<Claim> claims = new List<Claim> { emailClaim, userIdClaim, nameClaim, roleClaim };
+                            //List<Claim> claims = new List<Claim> { emailClaim, userIdClaim, nameClaim, roleClaim };
+                            List<Claim> claims = new List<Claim> {userIdClaim, nameClaim, roleClaim };
 
                             // create a claims identity
                             ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

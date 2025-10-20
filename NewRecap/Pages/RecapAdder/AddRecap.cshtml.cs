@@ -19,7 +19,6 @@ namespace NewRecap.Pages.RecapAdder
         public bool IsAdmin { get; set; }
         public List<EmployeeInfo> Employees { get; set; } = new List<EmployeeInfo>();
         public List<SelectListItem> Vehicles { get; set; } = new List<SelectListItem>();
-        //public List<SelectListItem> Locations { get; set; } = new List<SelectListItem>();
         public List<int> SelectedEmployeeIds { get; set; } = new();
         public List<WorkSegment> WorkSegments { get; set; }
 
@@ -51,7 +50,7 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    int LocationID = NewRecap.LocationID;
+                    //int LocationID = NewRecap.LocationID;
                     string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapState, RecapCity) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapState, @RecapCity);";
                     OleDbCommand cmdRecap = new OleDbCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
@@ -138,7 +137,7 @@ namespace NewRecap.Pages.RecapAdder
         {
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT VehicleID, VehicleName, VehicleVin FROM Vehicle";
+                string query = "SELECT * FROM Vehicle";
                 using (OleDbCommand command = new OleDbCommand(query, conn))
                 {
                     conn.Open();
@@ -150,7 +149,7 @@ namespace NewRecap.Pages.RecapAdder
                             var vehicle = new SelectListItem()
                             {
                                 Value = reader["VehicleID"].ToString(),
-                                Text = $"{reader["VehicleName"]}, Vin: {reader["VehicleVin"]}"
+                                Text = $"{reader["VehicleNumber"]}, {reader["VehicleName"]}, Vin: {reader["VehicleVin"]}"
                             };
                             Vehicles.Add(vehicle);
                         }
