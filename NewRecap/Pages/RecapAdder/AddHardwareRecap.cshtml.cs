@@ -83,39 +83,39 @@ namespace NewRecap.Pages.RecapAdder
                         cmdEmployeeRecap.Parameters.AddWithValue("@RecapID", RecapID);
                         cmdEmployeeRecap.Parameters.AddWithValue("@EmployeeID", empId);
                         cmdEmployeeRecap.ExecuteNonQuery();
-                        // For each segment that has at least one valid start/end pair
-                        var segments = NewRecap.WorkSegments.Where(s =>
-                            (s.WorkStart.HasValue && s.WorkEnd.HasValue) ||
-                            (s.LunchStart.HasValue && s.LunchEnd.HasValue));
 
-                        foreach (var seg in segments)
-                        {
-                            const string sql = @"
-                            INSERT INTO StartEnd
-                            (RecapID, EmployeeID,
+                    }
+
+                    // For each segment that has at least one valid start/end pair
+                    var segments = NewRecap.WorkSegments.Where(s =>
+                        (s.WorkStart.HasValue && s.WorkEnd.HasValue) ||
+                        (s.LunchStart.HasValue && s.LunchEnd.HasValue));
+                    foreach (var seg in segments)
+                    {
+                        const string sql = @"
+                            INSERT INTO StartEndTime
+                            (RecapID,
                             StartTime, EndTime, StartTimeDate, EndTimeDate, StartLunchTime, EndLunchTime, StartLunchDate, EndLunchDate)
                             VALUES
-                            (@RecapID, @EmployeeID,
+                            (@RecapID,
                             @StartTime, @EndTime, @StartTimeDate, @EndTimeDate, @StartLunchTime, @EndLunchTime, @StartLunchDate, @EndLunchDate);";
 
-                            using var cmd = new OleDbCommand(sql, conn);
+                        using var cmd = new OleDbCommand(sql, conn);
 
-                            // IMPORTANT: OleDb uses positional parameters — add in the same order as the SQL
-                            cmd.Parameters.Add("@RecapID", OleDbType.Integer).Value = RecapID;
-                            cmd.Parameters.Add("@EmployeeID", OleDbType.Integer).Value = empId;
+                        // IMPORTANT: OleDb uses positional parameters — add in the same order as the SQL
+                        cmd.Parameters.Add("@RecapID", OleDbType.Integer).Value = RecapID;
 
-                            cmd.Parameters.AddWithValue("@StartTime", (object?)seg.WorkStart ?? DBNull.Value);
-                            cmd.Parameters.AddWithValue("@EndTime", (object?)seg.WorkEnd ?? DBNull.Value);
-                            cmd.Parameters.AddWithValue("@StartTimeDate", (object?)seg.WorkStartDate ?? DBNull.Value);
-                            cmd.Parameters.AddWithValue("@EndTimeDate", (object?)seg.WorkEndDate ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@StartTime", (object?)seg.WorkStart ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@EndTime", (object?)seg.WorkEnd ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@StartTimeDate", (object?)seg.WorkStartDate ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@EndTimeDate", (object?)seg.WorkEndDate ?? DBNull.Value);
 
-                            cmd.Parameters.AddWithValue("@StartLunchTime", (object?)seg.LunchStart ?? DBNull.Value);
-                            cmd.Parameters.AddWithValue("@EndLunchTime", (object?)seg.LunchEnd ?? DBNull.Value);
-                            cmd.Parameters.AddWithValue("@StartLunchDate", (object?)seg.LunchStartDate ?? DBNull.Value);
-                            cmd.Parameters.AddWithValue("@EndLunchDate", (object?)seg.LunchEndDate ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@StartLunchTime", (object?)seg.LunchStart ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@EndLunchTime", (object?)seg.LunchEnd ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@StartLunchDate", (object?)seg.LunchStartDate ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@EndLunchDate", (object?)seg.LunchEndDate ?? DBNull.Value);
 
-                            cmd.ExecuteNonQuery();
-                        }
+                        cmd.ExecuteNonQuery();
                     }
                 }
                 return RedirectToPage("/Index");

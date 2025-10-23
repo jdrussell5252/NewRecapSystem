@@ -18,7 +18,7 @@
         <div class="col-12">
             @foreach (var g in Model.Employees)
             {
-                <input type="checkbox" value="@g.EmployeeID" class="form-check-input" name="SelectedEmployeeIDs" checked="@g.IsSelected" />
+                <input type="checkbox" value="@g.EmployeeID" class="form-check-input" name="SelectedEmployeeIds" checked="@g.IsSelected" />
                 <label class="form-label" id="LabelText">@g.EmployeeFName @g.EmployeeLName</label>
             }
             <span asp-validation-for="SelectedEmployeeIds" class="text-danger"></span>

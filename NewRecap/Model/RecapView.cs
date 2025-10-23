@@ -14,21 +14,12 @@
         public string? RecapCity { get; set; }
         public string? RecapDescription { get; set; }
         public List<string> RecapEmployees { get; set; } = new List<string>();
-
-
-        public int? VehicleID { get; set; }
-        public int? VehicleNumber { get; set; }
-        public string? VehicleName { get; set; }
-        public string? VehicleVin { get; set; }
+        public string? RecapVehicle { get; set; }
 
         public int? RecapAssetNumber { get; set; }
         public string? RecapSerialNumber { get; set; }
 
-        public int? StoreLocationID { get; set; }
-        public int? StoreNumber { get; set; }
-        public string? StoreState { get; set; }
-        public string? StoreCity { get; set; }
-
+        public string RecapStoreLocation { get; set; }
         public int? AddedBy { get; set; }
     }
 }

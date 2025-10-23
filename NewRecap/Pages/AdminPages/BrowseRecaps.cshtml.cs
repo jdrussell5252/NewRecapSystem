@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NewRecap.Model;
 using System.Data.OleDb;
+using System.Data.SqlTypes;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
 namespace NewRecap.Pages.AdminPages
@@ -23,7 +25,7 @@ namespace NewRecap.Pages.AdminPages
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
-                PopulateRecapList();
+                PopulateRecapList(userId);
             }
             /*--------------------ADMIN PRIV----------------------*/
         }
@@ -36,6 +38,7 @@ namespace NewRecap.Pages.AdminPages
                 conn.Open();
 
 
+
                 string deleteCmdText = "DELETE FROM Recap WHERE RecapID = @RecapID";
                 OleDbCommand deleteCmd = new OleDbCommand(deleteCmdText, conn);
                 deleteCmd.Parameters.AddWithValue("@RecapID", id);
@@ -46,91 +49,137 @@ namespace NewRecap.Pages.AdminPages
             return RedirectToPage();
         }//End of 'OnPostDelete'.
 
-        private void PopulateRecapList()
+        private void PopulateRecapList(int id)
         {
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            using (OleDbConnection conn = new OleDbConnection(connectionString))
             {
-                //string query = "SELECT r.RecapID, r.RecapWorkorderNumber, r.RecapDate, r.RecapDescription, r.RecapState, r.RecapCity, r.RecapAssetNumber, r.RecapSerialNumber, v.VehicleID, v.VehicleName, v.VehicleNumber, v.VehicleVin, se.TotalWorkTime, se.TotalLunchTime, se.TotalDriveTime, sl.StoreLocationID, sl.StoreNumber, sl.StoreState, sl.StoreCity FROM ((Recap AS r LEFT JOIN Vehicle AS v ON v.VehicleID = r.VehicleID) LEFT JOIN StoreLocations AS sl ON sl.StoreLocationID = r.StoreLocationID) LEFT JOIN StartEnd AS se ON se.RecapID = r.RecapID ORDER BY r.RecapDate DESC, r.RecapID DESC;";
-                const string query = @"
-                SELECT
-                r.RecapID,
-  r.RecapWorkorderNumber,
-  r.RecapDate,
-  r.RecapDescription,
-  r.RecapState,
-  r.RecapCity,
-  r.RecapAssetNumber,
-  r.RecapSerialNumber,
-
-  v.VehicleID,
-  v.VehicleName,
-  v.VehicleNumber,
-  v.VehicleVin,
-
-  ROUND(SUM(IIf(IsNull(se.TotalWorkTime), 0, se.TotalWorkTime)), 2)  AS WorkHours,
-  ROUND(SUM(IIf(IsNull(se.TotalLunchTime), 0, se.TotalLunchTime)), 2) AS LunchHours,
-  ROUND(SUM(IIf(IsNull(se.TotalDriveTime), 0, se.TotalDriveTime)), 2) AS DriveHours,
-  ROUND(SUM(IIf(IsNull(se.TotalTime), 0, se.TotalTime)), 2) AS TotalHours,
-
-  sl.StoreLocationID,
-  sl.StoreNumber,
-  sl.StoreState,
-  sl.StoreCity
-FROM ((Recap AS r
-LEFT JOIN Vehicle        AS v  ON v.VehicleID = r.VehicleID)
-LEFT JOIN StoreLocations AS sl ON sl.StoreLocationID = r.StoreLocationID)
-LEFT JOIN StartEnd       AS se ON se.RecapID = r.RecapID
-GROUP BY
-  r.RecapID, r.RecapWorkorderNumber, r.RecapDate, r.RecapDescription,
-  r.RecapState, r.RecapCity, r.RecapAssetNumber, r.RecapSerialNumber,
-  v.VehicleID, v.VehicleName, v.VehicleNumber, v.VehicleVin,
-  sl.StoreLocationID, sl.StoreNumber, sl.StoreState, sl.StoreCity
-ORDER BY r.RecapDate DESC, r.RecapID DESC;";
-
-                OleDbCommand cmd = new OleDbCommand(query, conn);
-                conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
-                if (reader.HasRows)
+                if (IsAdmin == true)
                 {
-                    while (reader.Read())
+                    string cmdText = @"
+                    SELECT
+                      r.RecapID,
+                      r.RecapWorkorderNumber,
+                      r.RecapDate,
+                      r.RecapDescription,
+                      r.RecapState,
+                      r.RecapCity,
+                      r.RecapAssetNumber,
+                      r.RecapSerialNumber,
+                      SUM(se.TotalWorkTime)  AS TotalWorkTime,
+                      SUM(se.TotalLunchTime) AS TotalLunchTime,
+                      SUM(se.TotalDriveTime) AS TotalDriveTime,
+                      SUM(se.TotalTime)      AS TotalTime
+                    FROM Recap AS r
+                    LEFT JOIN StartEndTime AS se ON se.RecapID = r.RecapID
+                    GROUP BY
+                      r.RecapID, r.RecapWorkorderNumber, r.RecapDate,
+                      r.RecapDescription, r.RecapState, r.RecapCity,
+                      r.RecapAssetNumber, r.RecapSerialNumber
+                    ORDER BY r.RecapDate DESC, r.RecapID DESC;";
+
+
+
+
+
+                    OleDbCommand cmd = new OleDbCommand(cmdText, conn);
+                    conn.Open();
+                    OleDbDataReader reader = cmd.ExecuteReader();
+                    if (reader.HasRows)
                     {
-                        RecapView ARecap = new RecapView
+                        while (reader.Read())
                         {
-                            RecapID = reader.GetInt32(0),
-                            RecapWorkorderNumber = reader.GetInt32(1),
-                            RecapDate = reader.GetDateTime(2),
-                            RecapDescription = reader.GetString(3),
-                            RecapState = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                            RecapCity = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                            RecapView recap = new RecapView
+                            {
+                                RecapID = reader.GetInt32(0),
+                                RecapWorkorderNumber = reader.GetInt32(1),
+                                RecapDate = reader.GetDateTime(2),
+                                RecapDescription = reader.GetString(3),
+                                RecapState = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                                RecapCity = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                                RecapAssetNumber = reader.IsDBNull(6) ? null : reader.GetInt32(6),
+                                RecapSerialNumber = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                                RecapEmployees = PopulateRecapEmployees(reader.GetInt32(0)),
+                                RecapStoreLocation = PopulateRecapStoreLocation(reader.GetInt32(0)),
 
-                            RecapAssetNumber = reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                            RecapSerialNumber = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                                TotalWorkTime = reader.IsDBNull(8) ? 0.0 : Math.Round(reader.GetDouble(8), 2),
+                                TotalLunchTime = reader.IsDBNull(9) ? 0.0 : Math.Round(reader.GetDouble(9), 2),
+                                TotalDriveTime = reader.IsDBNull(10) ? 0.0 : Math.Round(reader.GetDouble(10), 2),
+                                TotalTime = reader.IsDBNull(11) ? 0.0 : Math.Round(reader.GetDouble(11), 2),
 
-                            VehicleID = reader.IsDBNull(8) ? null : reader.GetInt32(8),
-                            VehicleName = reader.IsDBNull(9) ? null : reader.GetString(9),
-                            VehicleNumber = reader.IsDBNull(10) ? null : reader.GetInt32(10),
-                            VehicleVin = reader.IsDBNull(11) ? null : reader.GetString(11),
+                                RecapVehicle = PopulateRecapVehcile(reader.GetInt32(0)),
+                            };
+                            Recaps.Add(recap);
+                        }
+                    }
+                }
+                else
+                {
+                    string cmdText = @"
+                    SELECT
+                      r.RecapID,
+                      r.RecapWorkorderNumber,
+                      r.RecapDate,
+                      r.AddedBy,
+                      r.RecapDescription,
+                      r.RecapState,
+                      r.RecapCity,
+                      r.RecapAssetNumber,
+                      r.RecapSerialNumber,
+                      SUM(se.TotalWorkTime)  AS TotalWorkTime,
+                      SUM(se.TotalLunchTime) AS TotalLunchTime,
+                      SUM(se.TotalDriveTime) AS TotalDriveTime,
+                      SUM(se.TotalTime)      AS TotalTime
+                    FROM Recap AS r
+                    LEFT JOIN StartEndTime AS se ON se.RecapID = r.RecapID
+                    WHERE r.AddedBy = @AddedBy
+                    GROUP BY
+                      r.RecapID,
+                      r.RecapWorkorderNumber,
+                      r.RecapDate,
+                      r.AddedBy,
+                      r.RecapDescription,
+                      r.RecapState,
+                      r.RecapCity,
+                      r.RecapAssetNumber,
+                      r.RecapSerialNumber
+                    ORDER BY r.RecapDate DESC, r.RecapID DESC;";
 
-                            TotalWorkTime = reader.IsDBNull(12) ? 0.0 : Math.Round(reader.GetDouble(12), 2),
-                            TotalLunchTime = reader.IsDBNull(13) ? 0.0 : Math.Round(reader.GetDouble(13), 2),
-                            TotalDriveTime = reader.IsDBNull(14) ? 0.0 : Math.Round(reader.GetDouble(14), 2),
-                            TotalTime = reader.IsDBNull(15) ? 0.0 : Math.Round(reader.GetDouble(15), 2),
+                    OleDbCommand cmd = new OleDbCommand(cmdText, conn);
+                    cmd.Parameters.AddWithValue("@AddedBy", id);
+                    conn.Open();
+                    OleDbDataReader reader = cmd.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            RecapView recap = new RecapView
+                            {
 
-                            StoreLocationID = reader.IsDBNull(16) ? null : reader.GetInt32(16),
-                            StoreNumber = reader.IsDBNull(17) ? null : reader.GetInt32(17),
-                            StoreState = reader.IsDBNull(18) ? null : reader.GetString(18),
-                            StoreCity = reader.IsDBNull(19) ? null : reader.GetString(19),
+                                RecapID = reader.GetInt32(0),
+                                RecapWorkorderNumber = reader.GetInt32(1),
+                                RecapDate = reader.GetDateTime(2),
+                                RecapDescription = reader.GetString(4),
+                                RecapState = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                                RecapCity = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                                RecapAssetNumber = reader.IsDBNull(7) ? null : reader.GetInt32(7),
+                                RecapSerialNumber = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                                RecapEmployees = PopulateRecapEmployees(reader.GetInt32(0)),
+                                RecapStoreLocation = PopulateRecapStoreLocation(reader.GetInt32(0)),
 
+                                TotalWorkTime = reader.IsDBNull(9) ? 0.0 : Math.Round(reader.GetDouble(9), 2),
+                                TotalLunchTime = reader.IsDBNull(10) ? 0.0 : Math.Round(reader.GetDouble(10), 2),
+                                TotalDriveTime = reader.IsDBNull(11) ? 0.0 : Math.Round(reader.GetDouble(11), 2),
+                                TotalTime = reader.IsDBNull(12) ? 0.0 : Math.Round(reader.GetDouble(12), 2),
 
+                                RecapVehicle = PopulateRecapVehcile(reader.GetInt32(0)),
 
-                            RecapEmployees = PopulateRecapEmployees(reader.GetInt32(0)),
-                        };
-                        Recaps.Add(ARecap);
-
+                            };
+                            Recaps.Add(recap);
+                        }
                     }
                 }
             }
-        }//End of 'PopulateRecapList'.
+        }
 
         private List<string> PopulateRecapEmployees(int recapID)
         {
@@ -156,6 +205,59 @@ ORDER BY r.RecapDate DESC, r.RecapID DESC;";
                 }
             }
             return Employees;
+        }
+
+        private string PopulateRecapStoreLocation(int recapID)
+        {
+            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            {
+                string query = "SELECT StoreNumber, StoreState, StoreCity " +
+                               "FROM StoreLocations AS sl " +
+                               "INNER JOIN Recap AS r ON sl.StoreLocationID = r.StoreLocationID " +
+                               "WHERE r.RecapID = @RecapID";
+                OleDbCommand cmd = new OleDbCommand(query, conn);
+                cmd.Parameters.AddWithValue("@RecapID", recapID);
+                conn.Open();
+                OleDbDataReader reader = cmd.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        int StoreNumber = reader.GetInt32(0);
+                        string StoreState = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                        string StoreCity = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                        return $"Store Number: {StoreNumber} | Store State: {StoreState} | Store City: {StoreCity}";
+                    }
+                }
+            }
+            return "";
+        }
+
+
+        private string PopulateRecapVehcile(int recapID)
+        {
+            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            {
+                string query = "SELECT VehicleNumber, VehicleVin, VehicleName " +
+                               "FROM Vehicle AS v " +
+                               "LEFT JOIN Recap AS r ON v.VehicleID = r.VehicleID " +
+                               "WHERE r.RecapID = @RecapID";
+                OleDbCommand cmd = new OleDbCommand(query, conn);
+                cmd.Parameters.AddWithValue("@RecapID", recapID);
+                conn.Open();
+                OleDbDataReader reader = cmd.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        int VehicleNumber = reader.GetInt32(0);
+                        string VehicleVin = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                        string VehicleName = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                        return $"Vehicle Number: {VehicleNumber} | Vehicle Vin: {VehicleVin} | Vehicle Name: {VehicleName}";
+                    }
+                }
+                return "";
+            }
         }
 
         /*--------------------ADMIN PRIV----------------------*/
