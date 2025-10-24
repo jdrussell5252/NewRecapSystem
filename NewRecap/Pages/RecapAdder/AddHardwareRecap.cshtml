@@ -73,6 +73,7 @@
     <!-- Work Segments -->
     <div class="col-6 mt-2">
         <label class="form-label" id="LabelText">Work Segments:</label>
+        <span asp-validation-for="NewRecap.WorkSegments" class="text-danger"></span>
 
         <div id="segmentsWork" class="d-flex flex-column">
             @for (var i = 0; i < Model.NewRecap.WorkSegments.Count; i++)

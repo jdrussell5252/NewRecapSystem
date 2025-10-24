@@ -48,6 +48,26 @@ namespace NewRecap.Pages.RecapAdder
             {
                 ModelState.AddModelError("SelectedStoreLocationID", "Please select a store location.");
             }
+            // === Require at least 1 complete segment ===
+            bool hasAnySegments = NewRecap?.WorkSegments != null && NewRecap.WorkSegments.Any();
+            bool hasAtLeastOneComplete =
+                hasAnySegments &&
+                NewRecap.WorkSegments.Any(s =>
+                    // Work pair
+                    (s.WorkStartDate.HasValue && s.WorkStart.HasValue &&
+                     s.WorkEndDate.HasValue && s.WorkEnd.HasValue)
+                    ||
+                    // Drive pair
+                    (s.DriveStartDate.HasValue && s.DriveStart.HasValue &&
+                     s.DriveEndDate.HasValue && s.DriveEnd.HasValue)
+                    ||
+                    // Lunch pair
+                    (s.LunchStartDate.HasValue && s.LunchStart.HasValue &&
+                     s.LunchEndDate.HasValue && s.LunchEnd.HasValue)
+                );
+
+            if (!hasAtLeastOneComplete)
+                ModelState.AddModelError("NewRecap.WorkSegments", "Please add at least one complete time segment (Work, Drive, or Lunch) with both start and end date/time.");
             if (ModelState.IsValid)
             {
                 int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
