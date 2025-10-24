@@ -111,7 +111,6 @@ namespace NewRecap.Pages.RecapAdder
 
                         using var cmd = new OleDbCommand(sql, conn);
 
-                        // IMPORTANT: OleDb uses positional parameters — add in the same order as the SQL
                         cmd.Parameters.Add("@RecapID", OleDbType.Integer).Value = RecapID;
 
                         cmd.Parameters.AddWithValue("@StartTime", (object?)seg.WorkStart ?? DBNull.Value);
@@ -198,19 +197,18 @@ namespace NewRecap.Pages.RecapAdder
         }//End of 'PopulateEmployeeList'.
 
         /*--------------------ADMIN PRIV----------------------*/
-
         private void CheckIfUserIsAdmin(int userId)
         {
             using (var conn = new OleDbConnection(this.connectionString))
             {
                 // Adjust names to match your schema exactly:
                 // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = ?;";
+                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID;";
 
                 using (var cmd = new OleDbCommand(query, conn))
                 {
                     // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.Add("@?", OleDbType.Integer).Value = userId;
+                    cmd.Parameters.AddWithValue("@SystemUserID", userId);
 
                     conn.Open();
                     var roleObj = cmd.ExecuteScalar();

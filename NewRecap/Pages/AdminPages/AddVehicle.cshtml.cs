@@ -57,12 +57,12 @@ namespace NewRecap.Pages.AdminPages
             {
                 // Adjust names to match your schema exactly:
                 // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = ?;";
+                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID;";
 
                 using (var cmd = new OleDbCommand(query, conn))
                 {
                     // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.Add("@?", OleDbType.Integer).Value = userId;
+                    cmd.Parameters.AddWithValue("@SystemUserID", userId);
 
                     conn.Open();
                     var roleObj = cmd.ExecuteScalar();

@@ -21,5 +21,6 @@
 
         public string RecapStoreLocation { get; set; }
         public int? AddedBy { get; set; }
+        public string Segments { get; set; }
     }
 }

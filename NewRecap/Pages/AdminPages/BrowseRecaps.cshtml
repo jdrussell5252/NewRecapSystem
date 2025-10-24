@@ -73,15 +73,20 @@
                 </div>
             </div>
 
-            
             <div class="row my-2">
                 <div class="col-8">
-
                     <label class="form-label" id="LabelText" asp-for="@recap.RecapStoreLocation">Store Location:</label>
                     <label class="form-label" id="LabelText">@recap.RecapStoreLocation</label>
                 </div>
             </div>
-            
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText">Time Worked:</label>
+                    <label class="form-label" id="LabelText">@Html.Raw(recap.Segments)</label>
+
+                </div>
+            </div>
 
             <div class="row my-2">
                 <div class="col-8">

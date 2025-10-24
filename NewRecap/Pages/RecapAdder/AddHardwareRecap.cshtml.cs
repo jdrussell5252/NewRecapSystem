@@ -15,7 +15,7 @@ namespace NewRecap.Pages.RecapAdder
         public HardwareRecap NewRecap { get; set; } = new HardwareRecap();
         public List<EmployeeInfo> Employees { get; set; } = new List<EmployeeInfo>();
         public List<SelectListItem> Locations { get; set; } = new List<SelectListItem>();
-        public int SelectedStoreLocationID { get; set; }   // bind your <select> to this
+        public int SelectedStoreLocationID { get; set; }  
         public List<int> SelectedEmployeeIds { get; set; } = new();
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
@@ -69,7 +69,7 @@ namespace NewRecap.Pages.RecapAdder
                     cmdRecap.ExecuteNonQuery();
 
                     int RecapID;
-                    // Now fetch the generated AutoNumber (RecapID)
+                    // fetch the generated AutoNumber (RecapID)
                     using (var idCmd = new OleDbCommand("SELECT @@IDENTITY;", conn))
                     {
                         RecapID = Convert.ToInt32(idCmd.ExecuteScalar());
@@ -102,7 +102,6 @@ namespace NewRecap.Pages.RecapAdder
 
                         using var cmd = new OleDbCommand(sql, conn);
 
-                        // IMPORTANT: OleDb uses positional parameters — add in the same order as the SQL
                         cmd.Parameters.Add("@RecapID", OleDbType.Integer).Value = RecapID;
 
                         cmd.Parameters.AddWithValue("@StartTime", (object?)seg.WorkStart ?? DBNull.Value);
@@ -183,19 +182,18 @@ namespace NewRecap.Pages.RecapAdder
         }//End of 'PopulateEmployeeList'.
 
         /*--------------------ADMIN PRIV----------------------*/
-        
         private void CheckIfUserIsAdmin(int userId)
         {
             using (var conn = new OleDbConnection(this.connectionString))
             {
                 // Adjust names to match your schema exactly:
                 // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = ?;";
+                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID;";
 
                 using (var cmd = new OleDbCommand(query, conn))
                 {
                     // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.Add("@?", OleDbType.Integer).Value = userId;
+                    cmd.Parameters.AddWithValue("@SystemUserID", userId);
 
                     conn.Open();
                     var roleObj = cmd.ExecuteScalar();

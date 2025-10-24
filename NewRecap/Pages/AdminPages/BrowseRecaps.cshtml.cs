@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NewRecap.Model;
@@ -36,9 +36,6 @@ namespace NewRecap.Pages.AdminPages
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
                 conn.Open();
-
-
-
                 string deleteCmdText = "DELETE FROM Recap WHERE RecapID = @RecapID";
                 OleDbCommand deleteCmd = new OleDbCommand(deleteCmdText, conn);
                 deleteCmd.Parameters.AddWithValue("@RecapID", id);
@@ -77,10 +74,6 @@ namespace NewRecap.Pages.AdminPages
                       r.RecapAssetNumber, r.RecapSerialNumber
                     ORDER BY r.RecapDate DESC, r.RecapID DESC;";
 
-
-
-
-
                     OleDbCommand cmd = new OleDbCommand(cmdText, conn);
                     conn.Open();
                     OleDbDataReader reader = cmd.ExecuteReader();
@@ -107,6 +100,7 @@ namespace NewRecap.Pages.AdminPages
                                 TotalTime = reader.IsDBNull(11) ? 0.0 : Math.Round(reader.GetDouble(11), 2),
 
                                 RecapVehicle = PopulateRecapVehcile(reader.GetInt32(0)),
+                                Segments = PopulateRecapSegments(reader.GetInt32(0))
                             };
                             Recaps.Add(recap);
                         }
@@ -172,6 +166,8 @@ namespace NewRecap.Pages.AdminPages
                                 TotalTime = reader.IsDBNull(12) ? 0.0 : Math.Round(reader.GetDouble(12), 2),
 
                                 RecapVehicle = PopulateRecapVehcile(reader.GetInt32(0)),
+                                Segments = PopulateRecapSegments(reader.GetInt32(0))
+
 
                             };
                             Recaps.Add(recap);
@@ -260,6 +256,66 @@ namespace NewRecap.Pages.AdminPages
             }
         }
 
+        private string PopulateRecapSegments(int recapID)
+        {
+            using var conn = new OleDbConnection(this.connectionString);
+            const string query = @"
+        SELECT
+            StartTime, EndTime,
+            StartTimeDate, EndTimeDate,
+            StartDriveTime, EndDriveTime,
+            StartDriveDate, EndDriveDate,
+            StartLunchTime, EndLunchTime,
+            StartLunchDate, EndLunchDate
+        FROM StartEndTime
+        WHERE RecapID = @RecapID
+        ORDER BY StartTimeDate ASC, StartTime ASC";
+
+            using var cmd = new OleDbCommand(query, conn);
+            cmd.Parameters.AddWithValue("@RecapID", recapID);
+            conn.Open();
+
+            using var reader = cmd.ExecuteReader();
+            var parts = new List<string>();
+            int seg = 1;
+
+            DateTime? GetDT(int i) => reader.IsDBNull(i) ? (DateTime?)null : reader.GetDateTime(i);
+            string fdt(DateTime? d) => d?.ToString("MM/dd/yyyy") ?? "--";
+            string ftm(DateTime? d) => d?.ToString("hh:mm tt") ?? "--";
+            string combine(DateTime? date, DateTime? time)
+                => (date == null && time == null) ? "--" : $"{fdt(date)} {ftm(time)}";
+
+            while (reader.Read())
+            {
+                var startTime = GetDT(0);
+                var endTime = GetDT(1);
+                var startTimeDate = GetDT(2);
+                var endTimeDate = GetDT(3);
+                var startDrive = GetDT(4);
+                var endDrive = GetDT(5);
+                var startDriveDate = GetDT(6);
+                var endDriveDate = GetDT(7);
+                var startLunch = GetDT(8);
+                var endLunch = GetDT(9);
+                var startLunchDate = GetDT(10);
+                var endLunchDate = GetDT(11);
+
+                string segment =
+                    $"Segment {seg}: " +
+                    $"Work {combine(startTimeDate, startTime)} → {combine(endTimeDate, endTime)} | " +
+                    $"Drive {combine(startDriveDate, startDrive)} → {combine(endDriveDate, endDrive)} | " +
+                    $"Lunch {combine(startLunchDate, startLunch)} → {combine(endLunchDate, endLunch)}";
+
+
+                parts.Add(segment);
+                seg++;
+            }
+
+            return parts.Count == 0 ? "" : string.Join("<br></br>", parts);
+
+
+        }
+
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
         {
@@ -267,12 +323,12 @@ namespace NewRecap.Pages.AdminPages
             {
                 // Adjust names to match your schema exactly:
                 // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = ?;";
+                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID;";
 
                 using (var cmd = new OleDbCommand(query, conn))
                 {
                     // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.Add("@?", OleDbType.Integer).Value = userId;
+                    cmd.Parameters.AddWithValue("@SystemUserID", userId);
 
                     conn.Open();
                     var roleObj = cmd.ExecuteScalar();
