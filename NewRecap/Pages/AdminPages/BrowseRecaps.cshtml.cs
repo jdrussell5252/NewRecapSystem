@@ -311,9 +311,7 @@ namespace NewRecap.Pages.AdminPages
                 seg++;
             }
 
-            return parts.Count == 0 ? "" : string.Join("<br></br>", parts);
-
-
+            return parts.Count == 0 ? "" : string.Join("<br>", parts);
         }
 
         /*--------------------ADMIN PRIV----------------------*/

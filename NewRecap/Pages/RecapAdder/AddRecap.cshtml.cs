@@ -43,7 +43,7 @@ namespace NewRecap.Pages.RecapAdder
 
         public IActionResult OnPost()
         {
-                        // Validate employee selection
+            // Validate employee selection
             if (!SelectedEmployeeIds.Any())
             {
                 ModelState.AddModelError("SelectedEmployeeIds", "Please select at least one employee.");
@@ -54,7 +54,7 @@ namespace NewRecap.Pages.RecapAdder
             }
 
             // === Require at least 1 complete segment ===
-            bool hasAnySegments = NewRecap?.WorkSegments != null && NewRecap.WorkSegments.Any();
+            bool hasAnySegments = NewRecap.WorkSegments != null && NewRecap.WorkSegments.Any();
             bool hasAtLeastOneComplete =
                 hasAnySegments &&
                 NewRecap.WorkSegments.Any(s =>
