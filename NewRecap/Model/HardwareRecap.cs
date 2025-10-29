@@ -14,5 +14,9 @@ namespace NewRecap.Model
         public int? RecapWorkorderNumber { get; set; }
         public int? RecapAssetNumber { get; set; }
         public string? RecapSerialNumber { get; set; }
+
+        public string? IP { get; set; }
+        public string? WAM { get; set; }
+        public string? Hostname { get; set; }
     }
 }

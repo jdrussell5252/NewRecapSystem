@@ -48,10 +48,6 @@ namespace NewRecap.Pages.RecapAdder
             {
                 ModelState.AddModelError("SelectedEmployeeIds", "Please select at least one employee.");
             }
-            if (SelectedVehicleID <= 0)
-            {
-                ModelState.AddModelError("SelectedVehicleID", "Please select a Vehicle.");
-            }
 
             // === Require at least 1 complete segment ===
             bool hasAnySegments = NewRecap.WorkSegments != null && NewRecap.WorkSegments.Any();
@@ -69,10 +65,54 @@ namespace NewRecap.Pages.RecapAdder
                     // Lunch pair
                     (s.LunchStartDate.HasValue && s.LunchStart.HasValue &&
                      s.LunchEndDate.HasValue && s.LunchEnd.HasValue)
+                    ||
+                    // Support pair
+                    (s.SupportStartDate.HasValue && s.SupportStart.HasValue &&
+                     s.SupportEndDate.HasValue && s.SupportEnd.HasValue)
                 );
 
+            // === Require at least 1 complete segment ===
+            bool hasCorrectSegment = NewRecap.WorkSegments != null && NewRecap.WorkSegments.Any();
+            bool hasAtleastOneCorrect =
+                hasCorrectSegment &&
+                NewRecap.WorkSegments.Any(s =>
+                    (s.WorkStart.HasValue && s.WorkEnd.HasValue && s.WorkStart.Value >= s.WorkEnd.Value)
+                    ||
+                    // Drive pair
+                    (s.DriveStart.HasValue && s.DriveEnd.HasValue && s.DriveStart.Value >= s.DriveEnd.Value)
+                    ||
+                    // Lunch pair
+                    (s.LunchStart.HasValue && s.LunchEnd.HasValue && s.LunchStart.Value >= s.LunchEnd.Value)
+                    ||
+                    // Support pair
+                    (s.SupportStart.HasValue && s.SupportEnd.HasValue && s.SupportStart.Value >= s.SupportEnd.Value)
+                );
+
+            // === Disallow end DATE before start DATE (same-day is OK) ===
+            bool hasBadDateOrder =
+                NewRecap.WorkSegments != null && NewRecap.WorkSegments.Any(s =>
+                    // Work
+                    (s.WorkStartDate.HasValue && s.WorkEndDate.HasValue && s.WorkEndDate.Value < s.WorkStartDate.Value)
+                    ||
+                    // Drive
+                    (s.DriveStartDate.HasValue && s.DriveEndDate.HasValue && s.DriveEndDate.Value < s.DriveStartDate.Value)
+                    ||
+                    // Lunch
+                    (s.LunchStartDate.HasValue && s.LunchEndDate.HasValue && s.LunchEndDate.Value < s.LunchStartDate.Value)
+                    ||
+                    // Support
+                    (s.SupportStartDate.HasValue && s.SupportEndDate.HasValue && s.SupportEndDate.Value < s.SupportStartDate.Value)
+                );
+
+            if (hasBadDateOrder)
+                ModelState.AddModelError("NewRecap.WorkSegments", "End date cannot be before start date.");
+
+            if (hasAtleastOneCorrect)
+                ModelState.AddModelError("NewRecap.WorkSegments", "Start time's must be greater than end time.");
+
             if (!hasAtLeastOneComplete)
-                ModelState.AddModelError("NewRecap.WorkSegments", "Please add at least one complete time segment (Work, Drive, or Lunch) with both start and end date/time.");
+                ModelState.AddModelError("NewRecap.WorkSegments", "Please add at least one complete time segment (Work, Drive, Support, or Lunch) with both start and end date/time.");
+
             if (ModelState.IsValid)
             {
                 int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -80,17 +120,26 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapState, RecapCity) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapState, @RecapCity);";
+                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapState, RecapCity, StartingMileage, EndingMileage) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapState, @RecapCity, @StartingMileage, @EndingMileage);";
                     OleDbCommand cmdRecap = new OleDbCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
                     cmdRecap.Parameters.AddWithValue("@RecapDate", NewRecap.RecapDate);
                     cmdRecap.Parameters.AddWithValue("@AddedBy", userId);
 
-                    cmdRecap.Parameters.AddWithValue("@VehicleID", SelectedVehicleID);
+                    var pv = cmdRecap.Parameters.Add("@VehicleID", OleDbType.Integer);
+                    pv.Value = SelectedVehicleID.HasValue ? SelectedVehicleID.Value : DBNull.Value;
 
                     cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
                     cmdRecap.Parameters.AddWithValue("@RecapState", NewRecap.RecapState);
                     cmdRecap.Parameters.AddWithValue("@RecapCity", NewRecap.RecapCity);
+                    var pSMileage = cmdRecap.Parameters.Add("@StartingMileage", OleDbType.Integer);
+                    pSMileage.Value = NewRecap.StartingMileage.HasValue ? NewRecap.StartingMileage.Value : DBNull.Value;
+
+
+                    var pSEnding = cmdRecap.Parameters.Add("@EndingMileage", OleDbType.Integer);
+                    pSEnding.Value = NewRecap.EndingMileage.HasValue ? NewRecap.EndingMileage.Value : DBNull.Value;
+
+
                     cmdRecap.ExecuteNonQuery();
 
                     int RecapID;
@@ -114,7 +163,8 @@ namespace NewRecap.Pages.RecapAdder
                     var segments = NewRecap.WorkSegments.Where(s =>
                         (s.WorkStart.HasValue && s.WorkEnd.HasValue) ||
                         (s.DriveStart.HasValue && s.DriveEnd.HasValue) ||
-                        (s.LunchStart.HasValue && s.LunchEnd.HasValue));
+                        (s.LunchStart.HasValue && s.LunchEnd.HasValue) ||
+                        (s.SupportStart.HasValue && s.SupportEnd.HasValue));
 
                     foreach (var seg in segments)
                     {
@@ -123,12 +173,12 @@ namespace NewRecap.Pages.RecapAdder
                             (RecapID,
                             StartTime, EndTime, StartTimeDate, EndTimeDate,
                             StartDriveTime, EndDriveTime, StartDriveDate, EndDriveDate,
-                            StartLunchTime, EndLunchTime, StartLunchDate, EndLunchDate)
+                            StartLunchTime, EndLunchTime, StartLunchDate, EndLunchDate, StartSupportTime, EndSupportTime, StartSupportDate, EndSupportDate)
                             VALUES
                             (@RecapID,
                             @StartTime, @EndTime, @StartTimeDate, @EndTimeDate,
                             @StartDriveTime, @EndDriveTime, @StartDriveDate, @EndDriveDate,
-                            @StartLunchTime, @EndLunchTime, @StartLunchDate, @EndLunchDate);";
+                            @StartLunchTime, @EndLunchTime, @StartLunchDate, @EndLunchDate, @StartSupportTime, @EndSupportTime, @StartSupportDate, @EndSupportDate);";
 
                         using var cmd = new OleDbCommand(sql, conn);
 
@@ -148,6 +198,11 @@ namespace NewRecap.Pages.RecapAdder
                         cmd.Parameters.AddWithValue("@EndLunchTime", (object?)seg.LunchEnd ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@StartLunchDate", (object?)seg.LunchStartDate ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@EndLunchDate", (object?)seg.LunchEndDate ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@StartSupportTime", (object?)seg.SupportStart ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@EndSupportTime", (object?)seg.SupportEnd ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@StartSupportDate", (object?)seg.SupportStartDate ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@EndSupportDate", (object?)seg.SupportEndDate ?? DBNull.Value);
 
                         cmd.ExecuteNonQuery();
                     }

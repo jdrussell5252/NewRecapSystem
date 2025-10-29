@@ -17,6 +17,9 @@ namespace NewRecap.Model
         [Required(ErrorMessage = "Workorder Number is required.")]
         public int? RecapWorkorderNumber { get; set; }
 
+        public int? StartingMileage { get; set; }
+        public int? EndingMileage { get; set; }
+
 
     }// End of 'Recap' Class.
 }// End of 'NewRecap.Model'.

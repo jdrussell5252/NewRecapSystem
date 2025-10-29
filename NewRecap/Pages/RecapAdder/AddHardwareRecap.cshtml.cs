@@ -67,7 +67,7 @@ namespace NewRecap.Pages.RecapAdder
                 );
 
             if (!hasAtLeastOneComplete)
-                ModelState.AddModelError("NewRecap.WorkSegments", "Please add at least one complete time segment (Work, Drive, or Lunch) with both start and end date/time.");
+                ModelState.AddModelError("NewRecap.WorkSegments", "Please add at least one complete time segment (Work, Drive, Support, or Lunch) with both start and end date/time.");
             if (ModelState.IsValid)
             {
                 int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -75,17 +75,20 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapAssetNumber, RecapSerialNumber, StoreLocationID) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID);";
+                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, RecapDescription, RecapAssetNumber, RecapSerialNumber, StoreLocationID, IP, WAM, Hostname) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @RecapDescription, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID, @IP, @WAM, @Hostname);";
                     OleDbCommand cmdRecap = new OleDbCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
                     cmdRecap.Parameters.AddWithValue("@RecapDate", NewRecap.RecapDate);
                     cmdRecap.Parameters.AddWithValue("@AddedBy", userId);
-                    cmdRecap.Parameters.AddWithValue("@VehicleID", DBNull.Value);
-                    cmdRecap.Parameters.AddWithValue("@RecapDescription", string.IsNullOrWhiteSpace(NewRecap.RecapDescription) ? DBNull.Value : NewRecap.RecapDescription);
+                    cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
                     var pAsset = cmdRecap.Parameters.Add("@RecapAssetNumber", OleDbType.Integer);
                     pAsset.Value = NewRecap.RecapAssetNumber.HasValue ? NewRecap.RecapAssetNumber.Value : DBNull.Value;
                     cmdRecap.Parameters.AddWithValue("@RecapSerialNumber", string.IsNullOrWhiteSpace(NewRecap.RecapSerialNumber) ? DBNull.Value : NewRecap.RecapSerialNumber);
                     cmdRecap.Parameters.AddWithValue("@StoreLocationID", SelectedStoreLocationID);
+                    cmdRecap.Parameters.AddWithValue("@IP", string.IsNullOrWhiteSpace(NewRecap.IP) ? DBNull.Value : NewRecap.IP);
+                    cmdRecap.Parameters.AddWithValue("@WAM", string.IsNullOrWhiteSpace(NewRecap.WAM) ? DBNull.Value : NewRecap.WAM);
+                    cmdRecap.Parameters.AddWithValue("@Hostname", string.IsNullOrWhiteSpace(NewRecap.Hostname) ? DBNull.Value : NewRecap.Hostname);
+
                     cmdRecap.ExecuteNonQuery();
 
                     int RecapID;

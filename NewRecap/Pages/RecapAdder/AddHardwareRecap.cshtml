@@ -43,7 +43,7 @@
         <label asp-for="NewRecap.RecapDate" class="form-label" id="LabelText">Recap Date:</label>
     </div>
     <div class="col-12">
-        <input asp-for="NewRecap.RecapDate" type="date" class="form-control" />
+        <input asp-for="NewRecap.RecapDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
         <span asp-validation-for="NewRecap.RecapDate" class="text-danger"></span>
     </div>
     <!--End of Recap Date Textbox-->
@@ -126,14 +126,19 @@
                         <div class="col-6">
                             <label class="form-label">Lunch Start:</label>
                             <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.WorkSegments[@i].LunchStartDate" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].LunchStartDate" class="text-danger"></span>
+                                
                                 <input asp-for="NewRecap.WorkSegments[@i].LunchStart" type="time" class="form-control" />
                                 <span asp-validation-for="NewRecap.WorkSegments[@i].LunchStart" class="text-danger"></span>
-
                             </div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Lunch End:</label>
                             <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.WorkSegments[@i].LunchEndDate" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.WorkSegments[@i].LunchEndDate" class="text-danger"></span>
+
                                 <input asp-for="NewRecap.WorkSegments[@i].LunchEnd" type="time" class="form-control" />
                                 <span asp-validation-for="NewRecap.WorkSegments[@i].LunchEnd" class="text-danger"></span>
                             </div>
@@ -159,14 +164,14 @@
                 <div class="col-12">
                     <label class="form-label">Work Start:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].WorkStartDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].WorkStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
                         <input name="NewRecap.WorkSegments[__INDEX__].WorkStart" type="time" class="form-control" />
                     </div>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Work End:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].WorkEndDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].WorkEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
                         <input name="NewRecap.WorkSegments[__INDEX__].WorkEnd" type="time" class="form-control" />
                     </div>
                 </div>
@@ -185,14 +190,14 @@
                 <div class="col-12">
                     <label class="form-label">Lunch Start:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].LunchStartDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].LunchStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
                         <input name="NewRecap.WorkSegments[__INDEX__].LunchStart" type="time" class="form-control" />
                     </div>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Lunch End:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].LunchEndDate" type="date" class="form-control" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].LunchEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
                         <input name="NewRecap.WorkSegments[__INDEX__].LunchEnd" type="time" class="form-control" />
 
                     </div>
@@ -223,13 +228,41 @@
         <input asp-for="NewRecap.RecapSerialNumber" type="text" class="form-control" />
         <span asp-validation-for="NewRecap.RecapSerialNumber" class="text-danger"></span>
     </div>
-    <!--S/N Textbox-->
+    <!--End of S/N Textbox-->
+
+    <!--Hostname Textbox-->
+    <div class="col-4">
+        <label asp-for="NewRecap.Hostname" class="form-label" id="LabelText">Hostname:</label>
+    </div>
+    <div class="col-12">
+        <input asp-for="NewRecap.Hostname" type="text" class="form-control" />
+        <span asp-validation-for="NewRecap.Hostname" class="text-danger"></span>
+    </div>
+    <!--End of Hostname Textbox-->
+
+    <!--IP Textbox-->
+    <div class="col-4">
+        <label asp-for="NewRecap.IP" class="form-label" id="LabelText">IP:</label>
+    </div>
+    <div class="col-12">
+        <input asp-for="NewRecap.IP" type="text" class="form-control" />
+        <span asp-validation-for="NewRecap.IP" class="text-danger"></span>
+    </div>
+    <!--End of IP Textbox-->
+
+    <!--WAM Textbox-->
+    <div class="col-4">
+        <label asp-for="NewRecap.WAM" class="form-label" id="LabelText">WAM:</label>
+    </div>
+    <div class="col-12">
+        <input asp-for="NewRecap.WAM" type="text" class="form-control" />
+        <span asp-validation-for="NewRecap.WAM" class="text-danger"></span>
+    </div>
+    <!--End of WAM Textbox-->
 
     <script>
         // Start at current count so indexes continue correctly
         let segIndexWork  = @(Model.NewRecap.WorkSegments?.Count ?? 1);
-        let segIndexDrive = @(Model.NewRecap.WorkSegments?.Count ?? 1);
-        let segIndexLunch = @(Model.NewRecap.WorkSegments?.Count ?? 1);
 
         function addWorkSegment() {
           const tpl = document.getElementById('segmentTemplateWork').content.cloneNode(true);
@@ -243,7 +276,7 @@
           const tpl = document.getElementById('segmentTemplateDrive').content.cloneNode(true);
           const holder = document.createElement('div');
           holder.appendChild(tpl);
-          holder.innerHTML = holder.innerHTML.replaceAll('__INDEX__', segIndexDrive++);
+          holder.innerHTML = holder.innerHTML.replaceAll('__INDEX__', segIndexWork++);
           document.getElementById('segmentsDrive').append(...holder.childNodes);
         }
 
@@ -251,7 +284,7 @@
           const tpl = document.getElementById('segmentTemplateLunch').content.cloneNode(true);
           const holder = document.createElement('div');
           holder.appendChild(tpl);
-          holder.innerHTML = holder.innerHTML.replaceAll('__INDEX__', segIndexLunch++);
+          holder.innerHTML = holder.innerHTML.replaceAll('__INDEX__', segIndexWork++);
           document.getElementById('segmentsLunch').append(...holder.childNodes);
         }
 

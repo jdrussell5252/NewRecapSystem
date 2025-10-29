@@ -1,24 +1,18 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using NewRecap.Model;
 using System.Data.OleDb;
 using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
 {
-    [Authorize]
-    public class BrowseStoreLocationsModel : PageModel
+    public class EditEmployeeRoleModel : PageModel
     {
-        public List<LocationView> Locations { get; set; } = new List<LocationView>();
+        [BindProperty]
+        public EmployeeView Employees { get; set; } = new EmployeeView();
         public bool IsAdmin { get; set; }
-
-        [TempData]
-        public string ErrorMessage { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
-
-        public void OnGet()
+        public void OnGet(int id)
         {
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -27,64 +21,49 @@ namespace NewRecap.Pages.AdminPages
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
-            PopulateLocationList();
+            PopulateEmployeeList(id);
         }
 
-        private void PopulateLocationList()
+        public IActionResult OnPost(int id)
+        {
+            if (ModelState.IsValid)
+            {
+                using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+                {
+                    string cmdText = "UPDATE SystemUser SET SystemUserRole = @SystemUserRole WHERE EmployeeID = @EmployeeID";
+                    OleDbCommand cmd = new OleDbCommand(cmdText, conn);
+                    cmd.Parameters.AddWithValue("@SystemUserRole", Employees.EmployeeRole);
+                    cmd.Parameters.AddWithValue("@EmployeeID", id);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                return RedirectToPage("BrowseEmployees");
+            }
+            return Page();
+        }//End of 'OnPost'.
+
+        private void PopulateEmployeeList(int id)
         {
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
-                string query = "SELECT StoreLocationID, StoreNumber, StoreCity, StoreState FROM StoreLocations";
+                string query = "SELECT EmployeeID, SystemUserRole FROM SystemUser WHERE EmployeeID = @EmployeeID";
                 OleDbCommand cmd = new OleDbCommand(query, conn);
+                cmd.Parameters.AddWithValue("@EmployeeID", id);
                 conn.Open();
                 OleDbDataReader reader = cmd.ExecuteReader();
                 if (reader.HasRows)
                 {
                     while (reader.Read())
                     {
-                        LocationView ALocation = new LocationView
+                        Employees = new EmployeeView
                         {
-                            StoreLocationID = reader.GetInt32(0),
-                            StoreNumber = reader.GetInt32(1),
-                            StoreCity = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                            StoreState = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+                            EmployeeID = reader.GetInt32(0),
+                            EmployeeRole = reader.GetInt32(1)
                         };
-                        Locations.Add(ALocation);
-
                     }
                 }
             }
         }//End of 'PopulateLocationList'.
-
-        public IActionResult OnPostDelete(int id)
-        {
-            // delete the book from the database
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
-            {
-                conn.Open();
-                string cmdText = "SELECT COUNT(*) FROM RecapLocation WHERE LocationID = @LocationID";
-                OleDbCommand checkCmd = new OleDbCommand(cmdText, conn);
-                checkCmd.Parameters.AddWithValue("@LocationID", id);
-
-                
-                int usageCount = (int)checkCmd.ExecuteScalar();
-
-                if (usageCount > 0)
-                {
-                    ErrorMessage = "This location is in use and cannot be deleted.";
-                    return RedirectToPage();
-                }
-
-                
-                string deleteCmdText = "DELETE FROM StoreLocations WHERE StoreLocationID = @StoreLocationID";
-                OleDbCommand deleteCmd = new OleDbCommand(deleteCmdText, conn);
-                deleteCmd.Parameters.AddWithValue("@StoreLocationID", id);
-                deleteCmd.ExecuteNonQuery();
-
-            }
-
-            return RedirectToPage();
-        }//End of 'OnPostDelete'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

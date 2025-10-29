@@ -39,9 +39,49 @@
             </div>
 
             <div class="row my-2">
-                <div class="col-8">
-                    <label class="form-label" id="LabelText" asp-for="@recap.RecapStoreLocation">Store Location:</label>
+                <div class="col-12">
                     <label class="form-label" id="LabelText">@recap.RecapStoreLocation</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-12">
+                    <label class="form-label" id="LabelText" asp-for="@recap.TotalWorkTime">Total Work Time:</label>
+                    <label class="form-label" id="LabelText">@recap.TotalWorkTime Hour(s)</label>
+
+                    <label class="form-label" id="LabelText" asp-for="@recap.TotalLunchTime">| Total Lunch Time:</label>
+                    <label class="form-label" id="LabelText">@recap.TotalLunchTime Hour(s)</label>
+
+                    <label class="form-label" id="LabelText" asp-for="@recap.TotalDriveTime">| Total Time:</label>
+                    <label class="form-label" id="LabelText">@recap.TotalTime Hour(s)</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-12">
+                    <label class="form-label" id="LabelText">@Html.Raw(recap.Segments)</label>
+
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.Hostname">Hostname:</label>
+                    <label class="form-label" id="LabelText">@recap.Hostname</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.IP">IP:</label>
+                    <label class="form-label" id="LabelText">@recap.IP</label>
+                </div>
+            </div>
+
+            <div class="row my-2">
+                <div class="col-8">
+                    <label class="form-label" id="LabelText" asp-for="@recap.WAM">WAM:</label>
+                    <label class="form-label" id="LabelText">@recap.WAM</label>
                 </div>
             </div>
 
@@ -56,29 +96,6 @@
                 <div class="col-8">
                     <label class="form-label" id="LabelText" asp-for="@recap.RecapSerialNumber">Serial Number:</label>
                     <label class="form-label" id="LabelText">@recap.RecapSerialNumber</label>
-                </div>
-            </div>
-
-            <div class="row my-2">
-                <div class="col-8">
-                    <label class="form-label" id="LabelText" asp-for="@recap.TotalWorkTime">Total Work Time:</label>
-                    <label class="form-label" id="LabelText">@recap.TotalWorkTime Hour(s)</label>
-
-                    <label class="form-label" id="LabelText" asp-for="@recap.TotalLunchTime">| Total Lunch Time:</label>
-                    <label class="form-label" id="LabelText">@recap.TotalLunchTime Hour(s)</label>
-
-                    <label class="form-label" id="LabelText" asp-for="@recap.TotalDriveTime">| Total Drive Time:</label>
-                    <label class="form-label" id="LabelText">@recap.TotalDriveTime Hour(s)</label>
-
-                    <label class="form-label" id="LabelText" asp-for="@recap.TotalDriveTime">| Total Time:</label>
-                    <label class="form-label" id="LabelText">@recap.TotalTime Hour(s)</label>
-                </div>
-            </div>
-
-            <div class="row my-2">
-                <div class="col-8">
-                    <label class="form-label" id="LabelText">@Html.Raw(recap.Segments)</label>
-
                 </div>
             </div>
 
@@ -97,9 +114,9 @@
                 <form method="post" enctype=" multipart /form-data">
                     <button onclick="return confirm('Are you sure?')" class="btn btn-danger" asp-route-id="@recap.RecapID" asp-page-handler="Delete">Delete</button>
                 </form>
-                <hr style="border: 1px solid white; opacity: 1;" />
             }
             <!--END OF ADMINPRIVS-->
+            <hr style="border: 1px solid white; opacity: 1;" />
         }
         else{
             <div class="row my-2">
@@ -148,14 +165,31 @@
 
                 <div class="row my-2">
                     <div class="col-8">
+                        <label class="form-label" id="LabelText" asp-for="@recap.StartingMileage">Starting Mileage:</label>
+                        <label class="form-label" id="LabelText">@recap.StartingMileage</label>
+                    </div>
+                </div>
+
+                <div class="row my-2">
+                    <div class="col-8">
+                        <label class="form-label" id="LabelText" asp-for="@recap.EndingMileage">Ending Mileage:</label>
+                        <label class="form-label" id="LabelText">@recap.EndingMileage</label>
+                    </div>
+                </div>
+
+                <div class="row my-2">
+                    <div class="col-12">
                         <label class="form-label" id="LabelText" asp-for="@recap.TotalWorkTime">Total Work Time:</label>
                         <label class="form-label" id="LabelText">@recap.TotalWorkTime Hour(s)</label>
 
                         <label class="form-label" id="LabelText" asp-for="@recap.TotalLunchTime">| Total Lunch Time:</label>
                         <label class="form-label" id="LabelText">@recap.TotalLunchTime Hour(s)</label>
 
-                        <label class="form-label" id="LabelText" asp-for="@recap.TotalDriveTime">| Total Drive Time:</label>
+                        <label class="form-label" id="LabelText" asp-for="@recap.TotalDriveTime">| Total Travel Time:</label>
                         <label class="form-label" id="LabelText">@recap.TotalDriveTime Hour(s)</label>
+
+                        <label class="form-label" id="LabelText" asp-for="@recap.TotalSupportTime">| Total Support Time:</label>
+                        <label class="form-label" id="LabelText">@recap.TotalSupportTime Hour(s)</label>
 
                         <label class="form-label" id="LabelText" asp-for="@recap.TotalDriveTime">| Total Time:</label>
                         <label class="form-label" id="LabelText">@recap.TotalTime Hour(s)</label>
@@ -185,9 +219,9 @@
                 <form method="post" enctype=" multipart /form-data">
                     <button onclick="return confirm('Are you sure?')" class="btn btn-danger" asp-route-id="@recap.RecapID" asp-page-handler="Delete">Delete</button>
                 </form>
-                <hr style="border: 1px solid white; opacity: 1;" />
             }
             <!--END OF ADMINPRIVS-->
+            <hr style="border: 1px solid white; opacity: 1;" />
         }
 
     }

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using NewRecap.Model;
 using System.Data.OleDb;
 using System.Security.Claims;
@@ -9,16 +8,12 @@ using System.Security.Claims;
 namespace NewRecap.Pages.AdminPages
 {
     [Authorize]
-    public class BrowseStoreLocationsModel : PageModel
+    public class BrowseEmployeesModel : PageModel
     {
-        public List<LocationView> Locations { get; set; } = new List<LocationView>();
+        public List<EmployeeView> Employees { get; set; } = new List<EmployeeView>();
         public bool IsAdmin { get; set; }
-
-        [TempData]
-        public string ErrorMessage { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
-
-        public void OnGet()
+        public void OnGet(int id)
         {
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -27,34 +22,8 @@ namespace NewRecap.Pages.AdminPages
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
-            PopulateLocationList();
+            PopulateEmployeeList();
         }
-
-        private void PopulateLocationList()
-        {
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
-            {
-                string query = "SELECT StoreLocationID, StoreNumber, StoreCity, StoreState FROM StoreLocations";
-                OleDbCommand cmd = new OleDbCommand(query, conn);
-                conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        LocationView ALocation = new LocationView
-                        {
-                            StoreLocationID = reader.GetInt32(0),
-                            StoreNumber = reader.GetInt32(1),
-                            StoreCity = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                            StoreState = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
-                        };
-                        Locations.Add(ALocation);
-
-                    }
-                }
-            }
-        }//End of 'PopulateLocationList'.
 
         public IActionResult OnPostDelete(int id)
         {
@@ -62,29 +31,46 @@ namespace NewRecap.Pages.AdminPages
             using (OleDbConnection conn = new OleDbConnection(this.connectionString))
             {
                 conn.Open();
-                string cmdText = "SELECT COUNT(*) FROM RecapLocation WHERE LocationID = @LocationID";
+                string cmdText1 = "DELETE FROM SystemUser WHERE EmployeeID = @EmployeeID";
+                OleDbCommand checkCmd1 = new OleDbCommand(cmdText1, conn);
+                checkCmd1.Parameters.AddWithValue("@EmployeeID", id);
+                checkCmd1.ExecuteNonQuery();
+
+                string cmdText = "DELETE FROM Employee WHERE EmployeeID = @EmployeeID";
                 OleDbCommand checkCmd = new OleDbCommand(cmdText, conn);
-                checkCmd.Parameters.AddWithValue("@LocationID", id);
-
-                
-                int usageCount = (int)checkCmd.ExecuteScalar();
-
-                if (usageCount > 0)
-                {
-                    ErrorMessage = "This location is in use and cannot be deleted.";
-                    return RedirectToPage();
-                }
-
-                
-                string deleteCmdText = "DELETE FROM StoreLocations WHERE StoreLocationID = @StoreLocationID";
-                OleDbCommand deleteCmd = new OleDbCommand(deleteCmdText, conn);
-                deleteCmd.Parameters.AddWithValue("@StoreLocationID", id);
-                deleteCmd.ExecuteNonQuery();
-
+                checkCmd.Parameters.AddWithValue("@EmployeeID", id);
+                checkCmd.ExecuteNonQuery();
             }
 
             return RedirectToPage();
         }//End of 'OnPostDelete'.
+
+        private void PopulateEmployeeList()
+        {
+            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            {
+                string query = "SELECT e.EmployeeID, e.EmployeeFname, e.EmployeeLName, su.SystemUsername, su.SystemUserRole FROM Employee AS e INNER JOIN SystemUser AS su ON su.EmployeeID = e.EmployeeID";
+                OleDbCommand cmd = new OleDbCommand(query, conn);
+                conn.Open();
+                OleDbDataReader reader = cmd.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        EmployeeView Aemployee = new EmployeeView
+                        {
+                            EmployeeID = reader.GetInt32(0),
+                            EmployeeFName = reader.GetString(1),
+                            EmployeeLName = reader.GetString(2),
+                            EmployeeUsername = reader.GetString(3),
+                            EmployeeRole = reader.GetInt32(4)
+                        };
+                        Employees.Add(Aemployee);
+
+                    }
+                }
+            }
+        }//End of 'PopulateLocationList'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

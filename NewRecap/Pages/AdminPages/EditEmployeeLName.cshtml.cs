@@ -1,22 +1,16 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NewRecap.Model;
 using System.Data.OleDb;
 using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
 {
-    [Authorize]
-    public class EditStoreNumberModel : PageModel
+    public class EditEmployeeLNameModel : PageModel
     {
-        [BindProperty]
-        public LocationView Locations { get; set; } = new LocationView();
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
-        public void OnGet(int id)
+        public void OnGet()
         {
-            /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim != null)
@@ -24,50 +18,7 @@ namespace NewRecap.Pages.AdminPages
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
-            /*--------------------ADMIN PRIV----------------------*/
-            PopulateLocationList(id);
         }
-
-        public IActionResult OnPost(int id)
-        {
-            if (ModelState.IsValid)
-            {
-                    using (OleDbConnection conn = new OleDbConnection(this.connectionString))
-                    {
-                        string cmdText = "UPDATE StoreLocations SET StoreNumber = @StoreNumber WHERE StoreLocationID = @StoreLocationID";
-                        OleDbCommand cmd = new OleDbCommand(cmdText, conn);
-                        cmd.Parameters.AddWithValue("@StoreNumber", Locations.StoreNumber);
-                        cmd.Parameters.AddWithValue("@StoreLocationID", id);
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
-                    }
-                    return RedirectToPage("BrowseStoreLocations");
-            }
-            return Page();
-        }//End of 'OnPost'.
-
-        private void PopulateLocationList(int id)
-        {
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
-            {
-                string query = "SELECT StoreLocationID, StoreNumber FROM StoreLocations WHERE StoreLocationID = @StoreLocationID";
-                OleDbCommand cmd = new OleDbCommand(query, conn);
-                cmd.Parameters.AddWithValue("@StoreLocationID", id);
-                conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        Locations = new LocationView
-                        {
-                            StoreLocationID = reader.GetInt32(0),
-                            StoreNumber = reader.GetInt32(1)
-                        };
-                    }
-                }
-            }
-        }//End of 'PopulateLocationList'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

@@ -3,10 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NewRecap.Model;
 using System.Data.OleDb;
-using System.Data.SqlTypes;
+using System.IO;
 using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
-using System.Text.RegularExpressions;
 
 namespace NewRecap.Pages.AdminPages
 {
@@ -14,6 +12,7 @@ namespace NewRecap.Pages.AdminPages
     public class BrowseRecapsModel : PageModel
     {
         public List<RecapView> Recaps { get; set; } = new List<RecapView>();
+        public RecapView Recapp { get; set; } 
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
         public void OnGet()
@@ -62,16 +61,23 @@ namespace NewRecap.Pages.AdminPages
                       r.RecapCity,
                       r.RecapAssetNumber,
                       r.RecapSerialNumber,
-                      SUM(se.TotalWorkTime)  AS TotalWorkTime,
+                      r.IP,
+                      r.WAM,
+                      r.Hostname,
+                      r.StartingMileage,
+                      r.EndingMileage,
+                      SUM(se.TotalWorkTime) AS TotalWorkTime,
                       SUM(se.TotalLunchTime) AS TotalLunchTime,
                       SUM(se.TotalDriveTime) AS TotalDriveTime,
-                      SUM(se.TotalTime)      AS TotalTime
-                    FROM Recap AS r
-                    LEFT JOIN StartEndTime AS se ON se.RecapID = r.RecapID
+                      SUM(se.TotalSupportTime) AS TotalSupportTime,
+                      SUM(se.TotalTime) AS TotalTime
+                    FROM ((Recap AS r
+                    LEFT JOIN StartEndTime AS se ON se.RecapID = r.RecapID)
+                    LEFT JOIN EmployeeRecaps AS er ON er.RecapID = r.RecapID)
                     GROUP BY
                       r.RecapID, r.RecapWorkorderNumber, r.RecapDate,
                       r.RecapDescription, r.RecapState, r.RecapCity,
-                      r.RecapAssetNumber, r.RecapSerialNumber
+                      r.RecapAssetNumber, r.RecapSerialNumber, r.IP, r.WAM, r.Hostname, r.StartingMileage, r.EndingMileage
                     ORDER BY r.RecapDate DESC, r.RecapID DESC;";
 
                     OleDbCommand cmd = new OleDbCommand(cmdText, conn);
@@ -91,23 +97,34 @@ namespace NewRecap.Pages.AdminPages
                                 RecapCity = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                                 RecapAssetNumber = reader.IsDBNull(6) ? null : reader.GetInt32(6),
                                 RecapSerialNumber = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+
+                                IP = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                                WAM = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                                Hostname = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                                StartingMileage = reader.IsDBNull(11) ? null : reader.GetInt32(11),
+                                EndingMileage = reader.IsDBNull(12) ? null : reader.GetInt32(12),
+
                                 RecapEmployees = PopulateRecapEmployees(reader.GetInt32(0)),
                                 RecapStoreLocation = PopulateRecapStoreLocation(reader.GetInt32(0)),
 
-                                TotalWorkTime = reader.IsDBNull(8) ? 0.0 : Math.Round(reader.GetDouble(8), 2),
-                                TotalLunchTime = reader.IsDBNull(9) ? 0.0 : Math.Round(reader.GetDouble(9), 2),
-                                TotalDriveTime = reader.IsDBNull(10) ? 0.0 : Math.Round(reader.GetDouble(10), 2),
-                                TotalTime = reader.IsDBNull(11) ? 0.0 : Math.Round(reader.GetDouble(11), 2),
+                                TotalWorkTime = reader.IsDBNull(13) ? 0.0 : Math.Round(reader.GetDouble(13), 2),
+                                TotalLunchTime = reader.IsDBNull(14) ? 0.0 : Math.Round(reader.GetDouble(14), 2),
+                                TotalDriveTime = reader.IsDBNull(15) ? 0.0 : Math.Round(reader.GetDouble(15), 2),
+                                TotalSupportTime = reader.IsDBNull(16) ? 0.0 : Math.Round(reader.GetDouble(16), 2),
+                                TotalTime = reader.IsDBNull(17) ? 0.0 : Math.Round(reader.GetDouble(17), 2),
 
                                 RecapVehicle = PopulateRecapVehcile(reader.GetInt32(0)),
-                                Segments = PopulateRecapSegments(reader.GetInt32(0))
                             };
+                            bool isHardwareAdmin =
+                                (!string.IsNullOrWhiteSpace(recap.RecapStoreLocation));
+                            recap.Segments = PopulateRecapSegments(reader.GetInt32(0), isHardwareAdmin);
                             Recaps.Add(recap);
                         }
                     }
                 }
                 else
                 {
+                    int employeeId = GetEmployeeIdForUser(id);
                     string cmdText = @"
                     SELECT
                       r.RecapID,
@@ -119,12 +136,19 @@ namespace NewRecap.Pages.AdminPages
                       r.RecapCity,
                       r.RecapAssetNumber,
                       r.RecapSerialNumber,
-                      SUM(se.TotalWorkTime)  AS TotalWorkTime,
+                      r.IP,
+                      r.WAM,
+                      r.Hostname,
+                      r.StartingMileage,
+                      r.EndingMileage,
+                      SUM(se.TotalWorkTime) AS TotalWorkTime,
                       SUM(se.TotalLunchTime) AS TotalLunchTime,
                       SUM(se.TotalDriveTime) AS TotalDriveTime,
-                      SUM(se.TotalTime)      AS TotalTime
-                    FROM Recap AS r
-                    LEFT JOIN StartEndTime AS se ON se.RecapID = r.RecapID
+                      SUM(se.TotalSupportTime) AS TotalSupportTime,
+                      SUM(se.TotalTime) AS TotalTime
+                    FROM ((Recap AS r
+                    LEFT JOIN StartEndTime AS se ON se.RecapID = r.RecapID)
+                    LEFT JOIN EmployeeRecaps AS er ON er.RecapID = r.RecapID)
                     WHERE r.AddedBy = @AddedBy
                     GROUP BY
                       r.RecapID,
@@ -135,11 +159,13 @@ namespace NewRecap.Pages.AdminPages
                       r.RecapState,
                       r.RecapCity,
                       r.RecapAssetNumber,
-                      r.RecapSerialNumber
+                      r.RecapSerialNumber,
+                      r.StartingMileage, r.EndingMileage, r.IP, r.WAM, r.Hostname
                     ORDER BY r.RecapDate DESC, r.RecapID DESC;";
 
                     OleDbCommand cmd = new OleDbCommand(cmdText, conn);
                     cmd.Parameters.AddWithValue("@AddedBy", id);
+                    //cmd.Parameters.AddWithValue("@EmployeeID", employeeId);
                     conn.Open();
                     OleDbDataReader reader = cmd.ExecuteReader();
                     if (reader.HasRows)
@@ -152,24 +178,37 @@ namespace NewRecap.Pages.AdminPages
                                 RecapID = reader.GetInt32(0),
                                 RecapWorkorderNumber = reader.GetInt32(1),
                                 RecapDate = reader.GetDateTime(2),
+
                                 RecapDescription = reader.GetString(4),
                                 RecapState = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                                 RecapCity = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
                                 RecapAssetNumber = reader.IsDBNull(7) ? null : reader.GetInt32(7),
                                 RecapSerialNumber = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+
+                                IP = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                                WAM = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                                Hostname = reader.IsDBNull(11) ? string.Empty : reader.GetString(11),
+                                StartingMileage = reader.IsDBNull(12) ? null : reader.GetInt32(12),
+                                EndingMileage = reader.IsDBNull(13) ? null : reader.GetInt32(13),
+
                                 RecapEmployees = PopulateRecapEmployees(reader.GetInt32(0)),
                                 RecapStoreLocation = PopulateRecapStoreLocation(reader.GetInt32(0)),
 
-                                TotalWorkTime = reader.IsDBNull(9) ? 0.0 : Math.Round(reader.GetDouble(9), 2),
-                                TotalLunchTime = reader.IsDBNull(10) ? 0.0 : Math.Round(reader.GetDouble(10), 2),
-                                TotalDriveTime = reader.IsDBNull(11) ? 0.0 : Math.Round(reader.GetDouble(11), 2),
-                                TotalTime = reader.IsDBNull(12) ? 0.0 : Math.Round(reader.GetDouble(12), 2),
+                                TotalWorkTime = reader.IsDBNull(14) ? 0.0 : Math.Round(reader.GetDouble(14), 2),
+                                TotalLunchTime = reader.IsDBNull(15) ? 0.0 : Math.Round(reader.GetDouble(15), 2),
+                                TotalDriveTime = reader.IsDBNull(16) ? 0.0 : Math.Round(reader.GetDouble(16), 2),
+                                TotalSupportTime = reader.IsDBNull(17) ? 0.0 : Math.Round(reader.GetDouble(17), 2),
+                                TotalTime = reader.IsDBNull(18) ? 0.0 : Math.Round(reader.GetDouble(18), 2),
 
                                 RecapVehicle = PopulateRecapVehcile(reader.GetInt32(0)),
-                                Segments = PopulateRecapSegments(reader.GetInt32(0))
 
 
                             };
+
+                            bool isHardwareEmployee =
+                                (string.IsNullOrWhiteSpace(recap.RecapStoreLocation));
+
+                            recap.Segments = PopulateRecapSegments(reader.GetInt32(0), isHardwareEmployee);
                             Recaps.Add(recap);
                         }
                     }
@@ -256,20 +295,21 @@ namespace NewRecap.Pages.AdminPages
             }
         }
 
-        private string PopulateRecapSegments(int recapID)
+        private string PopulateRecapSegments(int recapID, bool isHardware)
         {
             using var conn = new OleDbConnection(this.connectionString);
             const string query = @"
-        SELECT
-            StartTime, EndTime,
-            StartTimeDate, EndTimeDate,
-            StartDriveTime, EndDriveTime,
-            StartDriveDate, EndDriveDate,
-            StartLunchTime, EndLunchTime,
-            StartLunchDate, EndLunchDate
-        FROM StartEndTime
-        WHERE RecapID = @RecapID
-        ORDER BY StartTimeDate ASC, StartTime ASC";
+            SELECT
+                StartTime, EndTime,
+                StartTimeDate, EndTimeDate,
+                StartDriveTime, EndDriveTime,
+                StartDriveDate, EndDriveDate,
+                StartLunchTime, EndLunchTime,
+                StartLunchDate, EndLunchDate,
+                StartSupportTime, EndSupportTime,
+                StartSupportDate, EndSupportDate
+                FROM StartEndTime
+            WHERE RecapID = @RecapID";
 
             using var cmd = new OleDbCommand(query, conn);
             cmd.Parameters.AddWithValue("@RecapID", recapID);
@@ -300,18 +340,54 @@ namespace NewRecap.Pages.AdminPages
                 var startLunchDate = GetDT(10);
                 var endLunchDate = GetDT(11);
 
-                string segment =
-                    $"Segment {seg}: " +
-                    $"Work {combine(startTimeDate, startTime)} → {combine(endTimeDate, endTime)} | " +
-                    $"Drive {combine(startDriveDate, startDrive)} → {combine(endDriveDate, endDrive)} | " +
-                    $"Lunch {combine(startLunchDate, startLunch)} → {combine(endLunchDate, endLunch)}";
+                var startSupport = GetDT(12);
+                var endSupport = GetDT(13);
+                var startSupportDate = GetDT(14);
+                var endSupportDate = GetDT(15);
 
-
-                parts.Add(segment);
-                seg++;
+                if(isHardware)
+                {
+                    string segment1 =
+                        $"Segment {seg}: " +
+                        $"Work {combine(startTimeDate, startTime)} → {combine(endTimeDate, endTime)} | " +
+                        $"Lunch {combine(startLunchDate, startLunch)} → {combine(endLunchDate, endLunch)}";
+                    parts.Add(segment1);
+                    seg++;
+                }
+                else
+                {
+                    string segment =
+                        $"Segment {seg}: " +
+                        $"Work {combine(startTimeDate, startTime)} → {combine(endTimeDate, endTime)} | " +
+                        $"Travel {combine(startDriveDate, startDrive)} → {combine(endDriveDate, endDrive)} | " +
+                        $"Lunch {combine(startLunchDate, startLunch)} → {combine(endLunchDate, endLunch)} | " +
+                        $"Support {combine(startSupportDate, startSupport)} → {combine(endSupportDate, endSupport)}";
+                    parts.Add(segment);
+                    seg++;
+                }
             }
+            return parts.Count == 0 ? "" : string.Join("<br></br>", parts);    
+        }
 
-            return parts.Count == 0 ? "" : string.Join("<br>", parts);
+        private int GetEmployeeIdForUser(int systemUserID)
+        {
+            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            {
+                string query = "SELECT EmployeeID FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                OleDbCommand cmd = new OleDbCommand(query, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", systemUserID);
+                conn.Open();
+                OleDbDataReader reader = cmd.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        int EmployeeID = reader.GetInt32(0);
+                        return EmployeeID;
+                    }
+                }
+                return 0;
+            }
         }
 
         /*--------------------ADMIN PRIV----------------------*/
