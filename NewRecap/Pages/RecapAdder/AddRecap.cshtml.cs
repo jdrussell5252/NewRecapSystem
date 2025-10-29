@@ -104,6 +104,56 @@ namespace NewRecap.Pages.RecapAdder
                     (s.SupportStartDate.HasValue && s.SupportEndDate.HasValue && s.SupportEndDate.Value < s.SupportStartDate.Value)
                 );
 
+            // Must have at least one complete NON-lunch segment (Work, Drive, or Support)
+            bool hasCompleteNonLunch =
+                NewRecap.WorkSegments != null && NewRecap.WorkSegments.Any(s =>
+                    (s.WorkStartDate.HasValue && s.WorkStart.HasValue &&
+                     s.WorkEndDate.HasValue && s.WorkEnd.HasValue)
+                    ||
+                    (s.DriveStartDate.HasValue && s.DriveStart.HasValue &&
+                     s.DriveEndDate.HasValue && s.DriveEnd.HasValue)
+                    ||
+                    (s.SupportStartDate.HasValue && s.SupportStart.HasValue &&
+                     s.SupportEndDate.HasValue && s.SupportEnd.HasValue)
+                );
+
+            // Do we have at least one complete Lunch pair?
+            bool hasCompleteLunch =
+                NewRecap.WorkSegments != null && NewRecap.WorkSegments.Any(s =>
+                    s.LunchStartDate.HasValue && s.LunchStart.HasValue &&
+                    s.LunchEndDate.HasValue && s.LunchEnd.HasValue
+                );
+
+            // If lunch is present but no non-lunch segments are complete, reject
+            if (hasCompleteLunch && !hasCompleteNonLunch)
+            {
+                ModelState.AddModelError(
+                    "NewRecap.WorkSegments",
+                    "You must include at least one Work, Drive, or Support segment."
+                );
+            }
+
+            // === Compute totals directly from your start/end date+time fields ===
+            var segs = NewRecap.WorkSegments;
+
+            // Totals across all segments
+            double lunchTotal = segs.Sum(s => Hours(s.LunchStartDate, s.LunchStart, s.LunchEndDate, s.LunchEnd));
+            double workTotal = segs.Sum(s => Hours(s.WorkStartDate, s.WorkStart, s.WorkEndDate, s.WorkEnd));
+            double driveTotal = segs.Sum(s => Hours(s.DriveStartDate, s.DriveStart, s.DriveEndDate, s.DriveEnd));
+            double supportTotal = segs.Sum(s => Hours(s.SupportStartDate, s.SupportStart, s.SupportEndDate, s.SupportEnd));
+
+            if (lunchTotal > 2.0)
+                ModelState.AddModelError("NewRecap.WorkSegments", "Total lunch time cannot exceed 2 hours.");
+
+            void NotGreaterThan(string label, double other)
+            {
+                if (other > 0 && lunchTotal > other)
+                    ModelState.AddModelError("NewRecap.WorkSegments", "Total lunch time cannot exceed any other segment total time.");
+            }
+            NotGreaterThan("work", workTotal);
+            NotGreaterThan("drive", driveTotal);
+            NotGreaterThan("support", supportTotal);
+
             if (hasBadDateOrder)
                 ModelState.AddModelError("NewRecap.WorkSegments", "End date cannot be before start date.");
 
@@ -111,7 +161,7 @@ namespace NewRecap.Pages.RecapAdder
                 ModelState.AddModelError("NewRecap.WorkSegments", "Start time's must be greater than end time.");
 
             if (!hasAtLeastOneComplete)
-                ModelState.AddModelError("NewRecap.WorkSegments", "Please add at least one complete time segment (Work, Drive, Support, or Lunch) with both start and end date/time.");
+                ModelState.AddModelError("NewRecap.WorkSegments", "Please add at least one complete time segment (Work, Drive, Support, or lunch) with both start and end date/time.");
 
             if (ModelState.IsValid)
             {
@@ -180,7 +230,7 @@ namespace NewRecap.Pages.RecapAdder
                             @StartDriveTime, @EndDriveTime, @StartDriveDate, @EndDriveDate,
                             @StartLunchTime, @EndLunchTime, @StartLunchDate, @EndLunchDate, @StartSupportTime, @EndSupportTime, @StartSupportDate, @EndSupportDate);";
 
-                        using var cmd = new OleDbCommand(sql, conn);
+                        OleDbCommand cmd = new OleDbCommand(sql, conn);
 
                         cmd.Parameters.Add("@RecapID", OleDbType.Integer).Value = RecapID;
 
@@ -206,6 +256,7 @@ namespace NewRecap.Pages.RecapAdder
 
                         cmd.ExecuteNonQuery();
                     }
+
                 }
                 return RedirectToPage("/Index");
             }
@@ -271,6 +322,35 @@ namespace NewRecap.Pages.RecapAdder
                 }
             }
         }//End of 'PopulateEmployeeList'.
+
+
+
+        
+        private static DateTime? CombineDateAndTime(DateTime? date, object time)
+        {
+            if (!date.HasValue || time == null) return null;
+
+            if (time is DateTime dt)
+                return new DateTime(date.Value.Year, date.Value.Month, date.Value.Day,
+                                    dt.Hour, dt.Minute, dt.Second);
+
+            if (time is TimeSpan ts)
+                return new DateTime(date.Value.Year, date.Value.Month, date.Value.Day,
+                                    ts.Hours, ts.Minutes, ts.Seconds);
+
+            return null;
+        }
+
+        private static double Hours(DateTime? sd, object st, DateTime? ed, object et)
+        {
+            var start = CombineDateAndTime(sd, st);
+            var end = CombineDateAndTime(ed, et);
+            if (!start.HasValue || !end.HasValue) return 0.0;
+
+            var span = end.Value - start.Value;
+            return span.TotalHours < 0 ? 0.0 : span.TotalHours;
+        }
+
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

@@ -19,6 +19,10 @@
         public DateTime? SupportStartDate { get; set; }
         public DateTime? SupportEndDate { get; set; }
 
+        public double? TotalWorkTime { get; set; }
+        public double? TotalLunchTime { get; set; }
+        public double? TotalSupportTime { get; set; }
+        public double? TotalDriveTime { get; set; }
 
     }
 }
