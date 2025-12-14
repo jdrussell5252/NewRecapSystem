@@ -22,9 +22,9 @@
                     <ul class="navbar-nav flex-grow-1 d-flex justify-content-center">
                         <!-- Always visible -->
                         <!--Left Nav-->
-                        <li class="nav-item">
+                        <!--<li class="nav-item">
                             <a class="nav-link text-white" asp-page="/Index">Home</a>
-                        </li>
+                        </li>-->
                         @if (!User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item">
@@ -39,13 +39,16 @@
                             @if (isAdmin)
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link text-white" asp-area="" asp-page="/AdminPages/BrowseStoreLocations">Store Locations</a>
+                                    <a class="nav-link text-white" asp-area="" asp-page="/AdminPages/BrowseStoreLocations">Locations</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link text-white" asp-area="" asp-page="/AdminPages/BrowseEmployees">Employees</a>
                                 </li>
                             }
                             <!--END OF ADMINPAGES-->
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-page="/AdminPages/BrowseToolKits">Toolkits</a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link text-white" asp-area="" asp-page="/AdminPages/BrowseRecaps">Recaps</a>
                             </li>
@@ -54,23 +57,19 @@
                         
                         <!--Middle "Logo" Nav-->
                         <li class="nav-item logo">
-                                <img src="~/Images/NacspaceImg.png" alt="Logo" id="LogoImg" />     
+
+                            <img src="~/Images/NacspaceImg.png" alt="Logo" id="LogoImg" />
+
                         </li>
                         <!--End of Middle "Logo" Nav-->
 
                         <!--Right Nav-->
-                        @if (!User.Identity.IsAuthenticated)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-white" asp-area="" asp-page="/Account/Register">Register</a>
-                            </li>
-                        }
-
+                        <li class="nav-item">
+                            <a class="nav-link text-white" asp-area="" asp-page="/Index">Home</a>
+                        </li>
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-white" asp-area="" asp-page="/Account/Profile">Profile</a>
-                            </li>
+
                             <!--ADMINPAGES-->
                             var isAdmin = ViewData["IsAdmin"] != null && (bool)ViewData["IsAdmin"];
                             @if (isAdmin)
@@ -99,12 +98,12 @@
     <footer class="footer">
         <div class="footer-section">
             <h1>Address</h1>
-            <p>300 Vista Dr, Nacogdoches, TX 75965</p>
+            <p>2400 Stallings Dr, Nacogdoches, TX 75965</p>
         </div>
         <div class="footer-section">
             <h1>Contact</h1>
-            <p>Nacogdoches Office: (936) 715-8633</p>
-            <p>Email: jakerussell8633@gmail.com</p>
+            <p>Helpdesk: (936) 715-4010</p>
+            <p>Frontdesk: (936) 715-4049</p>
         </div>
         <div class="footer-section">
             <h3>Connect</h3>

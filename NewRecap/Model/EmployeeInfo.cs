@@ -8,5 +8,5 @@ namespace NewRecap.Model
         public string EmployeeFName { get; set; }
         public string EmployeeLName { get; set; }
         public bool IsSelected;
-    }
-}
+    }// End of 'EmployeeInfo' Class.
+}// End of 'namespace'.

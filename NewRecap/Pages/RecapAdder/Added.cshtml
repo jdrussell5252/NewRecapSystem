@@ -1,0 +1,41 @@
+﻿@page
+@model NewRecap.Pages.RecapAdder.AddedModel
+@{
+}
+
+@{
+    var mailtoUrl = TempData["MailtoUrl"] as string;
+    var to = TempData["To"] as string;
+    var subject = TempData["Subject"] as string;
+}
+<h2 id="LabelText">Recap saved</h2>
+<p id="LabelText">We’ll try to open your mail app with a pre-filled draft.</p>
+
+<a id="openMail" href="@mailtoUrl" style="display:none;">open</a>
+
+<script>
+    (function () {
+      var a = document.getElementById('openMail');
+      if (a && a.href) {
+        // Use the anchor's resolved href so &amp; → & is handled by the browser
+        window.location.href = a.href;
+
+        setTimeout(function(){
+          var fb = document.getElementById('fallback');
+          if (fb) fb.style.display = 'block';
+        }, 1200);
+      }
+    })();
+</script>
+
+<div id="fallback" style="display:none; margin-top:1rem;">
+    <p>If your mail app didn’t open, click here:</p>
+    <p><a href="@mailtoUrl">Open draft again</a></p>
+</div>
+
+<hr />
+@if (!string.IsNullOrWhiteSpace(to) || !string.IsNullOrWhiteSpace(subject))
+{
+    <p><strong>To:</strong> @to</p>
+    <p><strong>Subject:</strong> @subject</p>
+}

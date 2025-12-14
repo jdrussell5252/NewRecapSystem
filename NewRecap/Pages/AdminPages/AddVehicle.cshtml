@@ -12,6 +12,7 @@
 <form method="post">
     <div class="row">
 
+        <!--===================Vehicle Number Textbox==================-->
         <div class="row">
             <div class="col-4">
                 <label asp-for="NewVehicles.VehicleNumber" class="form-label" id="LabelText">Vehicle Number:</label>
@@ -21,31 +22,26 @@
                 <span asp-validation-for="NewVehicles.VehicleNumber" class="text-danger"></span>
             </div>
         </div>
+        <!--===================End of Vehicle Number Textbox==================-->
 
+        <!--===================Vehicle Model Textbox==================-->
         <div class="row">
             <div class="col-4">
-                <label asp-for="NewVehicles.VehicleVin" class="form-label" id="LabelText">Vehicle Vin:</label>
+                <label asp-for="NewVehicles.VehicleModel" class="form-label" id="LabelText">Vehicle Model:</label>
             </div>
             <div class="col-12">
-                <input asp-for="NewVehicles.VehicleVin" type="text" class="form-control" />
-                <span asp-validation-for="NewVehicles.VehicleVin" class="text-danger"></span>
+                <input asp-for="NewVehicles.VehicleModel" type="text" class="form-control" />
+                <span asp-validation-for="NewVehicles.VehicleModel" class="text-danger"></span>
             </div>
         </div>
+        <!--===================End of Vehicle Name Textbox==================-->
 
-        <div class="row">
-            <div class="col-4">
-                <label asp-for="NewVehicles.VehicleName" class="form-label" id="LabelText">Vehicle Name:</label>
-            </div>
-            <div class="col-12">
-                <input asp-for="NewVehicles.VehicleName" type="text" class="form-control" />
-                <span asp-validation-for="NewVehicles.VehicleName" class="text-danger"></span>
-            </div>
-        </div>
-
+        <!--===================Submit Button==================-->
         <div class="row my-2">
             <div class="col-12">
                 <button type="submit" class="form-control btn btn-primary"> Confirm </button>
             </div>
         </div>
-
+        <!--===================End of Submit Button==================-->
+    </div>
 </form>

@@ -5,23 +5,34 @@
 
 <div class="row text-center">
     <div class="col-12">
-        <label class="form-label fs-1" id="LabelText">Edit City</label>
+        <label class="form-label fs-1" id="LabelText">Edit Store City</label>
     </div>
 </div>
 
 <form method="post" enctype="multipart/form-data">
     <div class="row my-2">
+        <!--Label-->
         <div class="col-4">
             <label asp-for="Locations.StoreCity" class="form-label" id="LabelText">City:</label>
         </div>
+        <!--End of Label-->
+
+        <!--City Textbox-->
         <div class="col-12">
             <input asp-for="Locations.StoreCity" type="text" class="form-control" />
             <span asp-validation-for="Locations.StoreCity" class="text-danger"></span>
         </div>
+        <!--End of City Textbox-->
     </div>
+
+    <!--Confirm Edit/Submit Button-->
     <div class="row my-2">
         <div class="col-12">
             <button type="submit" class="form-control btn btn-primary">Confirm Edit</button>
         </div>
     </div>
+    <!--End of Confirm Edit/Submit Button-->
 </form>
+
+
+            

@@ -3,8 +3,7 @@
     public class VehicleView
     {
         public int VehicleID { get; set; }
-        public int VehicleNumber { get; set; }
-        public string? VehicleName { get; set; }
-        public string? VehicleVin { get; set; }
-    }
-}
+        public string? VehicleNumber { get; set; }
+        public string? VehicleModel { get; set; }
+    }// End of 'VehicleView' Class.
+}// End of 'namespace'.

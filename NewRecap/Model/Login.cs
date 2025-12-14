@@ -10,5 +10,5 @@ namespace NewRecap.Model
 
         [Required(ErrorMessage = "Password is required")]
         public String Password { get; set; }
-    }//End of 'Login' Class.
-}//End of 'namespace'.
+    }// End of 'Login' Class.
+}// End of 'namespace'.

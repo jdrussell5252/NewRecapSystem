@@ -4,8 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 using NewRecap.Model;
-using System.Data.OleDb;
+
 using NewRecap.MyAppHelper;
+using Microsoft.Data.SqlClient;
 
 namespace NewRecap.Pages.Account
 {
@@ -14,7 +15,21 @@ namespace NewRecap.Pages.Account
         
         [BindProperty]
         public Login LoginUser { get; set; }
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
+        public bool IsAdmin { get; set; }
+
+
+        public void OnGet()
+        {
+            /*--------------------ADMIN PRIV----------------------*/
+            // Safely access the NameIdentifier claim
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null)
+            {
+                int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                CheckIfUserIsAdmin(userId);
+            }
+            /*--------------------ADMIN PRIV----------------------*/
+        }//End of 'OnGet'.
 
         public IActionResult OnPost()
         {
@@ -24,20 +39,24 @@ namespace NewRecap.Pages.Account
                 // Check if the user exists in the database.
                 // If the user exists, redirect to the profile page.
                 // If the user does not exist, display an error message.
-                using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+                using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
                 {
                     string cmdText = "SELECT * FROM [SystemUser] WHERE SystemUsername = @SystemUsername";
                     //string cmdText = "SELECT * FROM [SystemUser] WHERE SystemUserEmail = @Email";
-                    OleDbCommand cmd = new OleDbCommand(cmdText, conn);
+                    SqlCommand cmd = new SqlCommand(cmdText, conn);
                     cmd.Parameters.AddWithValue("@SystemUsername", LoginUser.Username);
                     conn.Open();
-                    OleDbDataReader reader = cmd.ExecuteReader();
+                    SqlDataReader reader = cmd.ExecuteReader();
                     if (reader.HasRows)
                     {
                         reader.Read();
                         string passwordHash = reader.GetString(3);
                         if (AppHelper.VerifyPassword(LoginUser.Password, passwordHash))
                         {
+                            bool mustChangePassword = false;
+                            if (!reader.IsDBNull(6))      
+                                mustChangePassword = reader.GetBoolean(6);
+
                             // create a email claim
                             //Claim emailClaim = new Claim(ClaimTypes.Email, LoginUser.Email);
                             // create a user id claim
@@ -45,11 +64,19 @@ namespace NewRecap.Pages.Account
                             // create a name claim
                             Claim nameClaim = new Claim(ClaimTypes.Name, reader.GetString(2));
                             // create a role claim
-                            Claim roleClaim = new Claim(ClaimTypes.Role, reader.GetInt32(4).ToString());
+                            //Claim roleClaim = new Claim(ClaimTypes.Role, reader.GetInt32(4).ToString());
 
+                            bool isAdmin = reader.GetBoolean(4);
+                            Claim roleClaim = new Claim(ClaimTypes.Role, isAdmin ? "Admin" : "Employee");
+
+
+                            Claim mustChangeClaim = new Claim(
+                                "MustChangePassword",
+                                mustChangePassword ? "true" : "false"
+                            );
                             // create a list of claims
                             //List<Claim> claims = new List<Claim> { emailClaim, userIdClaim, nameClaim, roleClaim };
-                            List<Claim> claims = new List<Claim> {userIdClaim, nameClaim, roleClaim };
+                            List<Claim> claims = new List<Claim> {userIdClaim, nameClaim, roleClaim, mustChangeClaim };
 
                             // create a claims identity
                             ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -60,19 +87,22 @@ namespace NewRecap.Pages.Account
                             // sign in the user
                             HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
+                            if (mustChangePassword)
+                                return RedirectToPage("/Account/EditPassword");
+
                             // update user login time
                             // UpdateUserLoginTime(reader.GetInt32(0));
                             return RedirectToPage("/Index");
                         }
                         else
                         {
-                            ModelState.AddModelError("LoginError", "Invalid Credentials.");
+                            ModelState.AddModelError("LoginUser.Username", "Invalid Credentials.");
                             return Page();
                         }
                     }
                     else
                     {
-                        ModelState.AddModelError("LoginError", "Invalid Credentials.");
+                        ModelState.AddModelError("LoginUser.Username", "Invalid Credentials.");
                         return Page();
                     }
                 }
@@ -83,6 +113,31 @@ namespace NewRecap.Pages.Account
                 return Page();
             }
         }//End of 'OnPost'.
-        
+
+        /*--------------------ADMIN PRIV----------------------*/
+        private void CheckIfUserIsAdmin(int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string cmdText = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(cmdText, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userId);
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                // If SystemUserRole is 2, set IsUserAdmin to true
+                if (result != null && result.ToString() == "1")
+                {
+                    IsAdmin = true;
+                    ViewData["IsAdmin"] = true;
+                }
+                else
+                {
+                    IsAdmin = false;
+                }
+            }
+        }//End of 'CheckIfUserIsAdmin'.
+        /*--------------------ADMIN PRIV----------------------*/
+
     }//End of 'Login' Class.
 }//End of 'namespace'.

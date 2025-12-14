@@ -15,7 +15,10 @@
             <label asp-for="Employees.EmployeeRole" class="form-label" id="LabelText">Role:</label>
         </div>
         <div class="col-12">
-            <input asp-for="Employees.EmployeeRole" type="text" class="form-control" />
+            <select asp-for="Employees.EmployeeRole" class="form-control">
+                <option value="true">Admin</option>
+                <option value="false">Employee</option>
+            </select>
             <span asp-validation-for="Employees.EmployeeRole" class="text-danger"></span>
         </div>
     </div>

@@ -6,6 +6,6 @@
         public string? StoreState { get; set; }
         public string? StoreCity { get; set; }
         public int StoreLocationID_Original { get; set; }     // hidden original
-        public int StoreNumber { get; set; }
-    }
-}
+        public int? StoreNumber { get; set; }
+    }// End of 'LocationView' Class.
+}// End of 'namespace'.

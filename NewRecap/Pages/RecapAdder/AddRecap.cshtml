@@ -3,53 +3,59 @@
 @{
 }
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
 <div class="row text-center">
     <div class="col-12">
         <label class="form-label fs-1" id="LabelText">Add Recap</label>
     </div>
 </div>
-<form method="post" enctype="multipart/form-data">
 
-    <!--Employee Checkboxs-->
+<form method="post" enctype="multipart/form-data">
+    <!--Employee Involved-->
     <div class="row my-2">
         <div class="col-4">
             <label class="form-label" id="LabelText">Employees Involved:</label>
         </div>
         <div class="col-12">
-            @foreach (var g in Model.Employees)
-            {
-                <input type="checkbox" value="@g.EmployeeID" class="form-check-input" name="SelectedEmployeeIDs" value="@g.EmployeeID" checked="@g.IsSelected" />
-                <label class="form-label" id="LabelText">@g.EmployeeFName @g.EmployeeLName</label>
-            }
+            <select asp-for="SelectedEmployeeIds"
+                    asp-items="Model.EmployeeOptions"
+                    class="form-select js-employee-choices"
+                    multiple>
+            </select>
             <span asp-validation-for="SelectedEmployeeIds" class="text-danger"></span>
         </div>
     </div>
-    <!--End of Employee Checkboxs-->
+    <input type="hidden" id="TrainingEmployeeIds" name="TrainingEmployeeIds" />
+    <!--End of Employee Involved-->
 
     <!--Workorder Textbox-->
     <div class="row my-2">
-        <div class="col-4">
+        <div class="col-12">
             <label asp-for="NewRecap.RecapWorkorderNumber" class="form-label" id="LabelText">Workorder Number:</label>
         </div>
         <div class="col-12">
-            <input asp-for="NewRecap.RecapWorkorderNumber" type="text" class="form-control" />
+            <input asp-for="NewRecap.RecapWorkorderNumber" type="number" class="form-control" />
             <span asp-validation-for="NewRecap.RecapWorkorderNumber" class="text-danger"></span>
         </div>
     </div>
     <!--Workorder Textbox-->
 
-    <!--Recap Date Textbox-->
-    <div class="col-4">
-        <label asp-for="NewRecap.RecapDate" class="form-label" id="LabelText">Recap Date:</label>
+    <!--Customer Textbox-->
+    <div class="row my-2">
+        <div class="col-12">
+            <label asp-for="NewRecap.Customer" class="form-label" id="LabelText">Customer:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="NewRecap.Customer" type="text" class="form-control" />
+            <span asp-validation-for="NewRecap.Customer" class="text-danger"></span>
+        </div>
     </div>
-    <div class="col-12">
-        <input asp-for="NewRecap.RecapDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
-        <span asp-validation-for="NewRecap.RecapDate" class="text-danger"></span>
-    </div>
-    <!--End of Recap Date Textbox-->
+    <!--End of Customer Textbox-->
 
     <!--Recap Description Textbox-->
-    <div class="col-4">
+    <div class="col-12">
         <label asp-for="NewRecap.RecapDescription" class="form-label" id="LabelText">Recap Description:</label>
     </div>
     <div class="col-12">
@@ -77,7 +83,7 @@
         <span asp-validation-for="NewRecap.RecapCity" class="text-danger"></span>
     </div>
     <!--End of City Textbox-->
-    
+
     <!--Vehicle DropDown-->
     <div class="col-6 mt-2">
         <label asp-for="SelectedVehicleID" class="form-label" id="LabelText">Vehicle Used:</label>
@@ -95,7 +101,7 @@
         <label asp-for="NewRecap.StartingMileage" class="form-label" id="LabelText">Starting Mileage:</label>
     </div>
     <div class="col-12">
-        <input asp-for="NewRecap.StartingMileage" type="text" class="form-control" />
+        <input asp-for="NewRecap.StartingMileage" type="number" class="form-control" />
         <span asp-validation-for="NewRecap.StartingMileage" class="text-danger"></span>
     </div>
     <!--End of Starting Mileage Textbox-->
@@ -105,7 +111,7 @@
         <label asp-for="NewRecap.EndingMileage" class="form-label" id="LabelText">Ending Mileage:</label>
     </div>
     <div class="col-12">
-        <input asp-for="NewRecap.EndingMileage" type="text" class="form-control" />
+        <input asp-for="NewRecap.EndingMileage" type="number" class="form-control" />
         <span asp-validation-for="NewRecap.EndingMileage" class="text-danger"></span>
     </div>
     <!--End of Ending Mileage Textbox-->
@@ -141,7 +147,7 @@
                             </div>
                         </div>
                         <div class="col-12 text-end">
-                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                            <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
                         </div>
                     </div>
                 </div>
@@ -157,34 +163,34 @@
     <!-- Drive Segments -->
     <div class="col-6 mt-2">
         <label class="form-label" id="LabelText">Travel Segments:</label>
-
+        <span asp-validation-for="NewRecap.TravelSegments" class="text-danger"></span>
         <div id="segmentsDrive" class="d-flex flex-column">
-            @for (var i = 0; i < Model.NewRecap.WorkSegments.Count; i++)
+            @for (var i = 0; i < Model.NewRecap.TravelSegments.Count; i++)
             {
                 <div class="card p-2" data-seg>
                     <div class="row g-2 align-items-end">
                         <div class="col-6">
                             <label class="form-label">Travel Start</label>
                             <div class="d-flex flex-column">
-                                <input asp-for="NewRecap.WorkSegments[@i].DriveStartDate" type="date" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].DriveStartDate" class="text-danger"></span>
+                                <input asp-for="NewRecap.TravelSegments[@i].DriveStartDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.TravelSegments[@i].DriveStartDate" class="text-danger"></span>
 
-                                <input asp-for="NewRecap.WorkSegments[@i].DriveStart" type="time" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].DriveStart" class="text-danger"></span>
+                                <input asp-for="NewRecap.TravelSegments[@i].DriveStart" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.TravelSegments[@i].DriveStart" class="text-danger"></span>
                             </div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Travel End</label>
                             <div class="d-flex flex-column">
-                                <input asp-for="NewRecap.WorkSegments[@i].DriveEndDate" type="date" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].DriveEndDate" class="text-danger"></span>
+                                <input asp-for="NewRecap.TravelSegments[@i].DriveEndDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.TravelSegments[@i].DriveEndDate" class="text-danger"></span>
 
-                                <input asp-for="NewRecap.WorkSegments[@i].DriveEnd" type="time" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].DriveEnd" class="text-danger"></span>
+                                <input asp-for="NewRecap.TravelSegments[@i].DriveEnd" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.TravelSegments[@i].DriveEnd" class="text-danger"></span>
                             </div>
                         </div>
                         <div class="col-12 text-end">
-                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                            <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
                         </div>
                     </div>
                 </div>
@@ -200,35 +206,35 @@
     <!-- Lunch Segments -->
     <div class="col-6 mt-2">
         <label class="form-label" id="LabelText">Lunch Segments:</label>
-
+        <span asp-validation-for="NewRecap.LunchSegments" class="text-danger"></span>
         <div id="segmentsLunch" class="d-flex flex-column">
-            @for (var i = 0; i < Model.NewRecap.WorkSegments.Count; i++)
+            @for (var i = 0; i < Model.NewRecap.LunchSegments.Count; i++)
             {
                 <div class="card p-2" data-seg>
                     <div class="row g-2 align-items-end">
                         <div class="col-6">
                             <label class="form-label">Lunch Start:</label>
                             <div class="d-flex flex-column">
-                                <input asp-for="NewRecap.WorkSegments[@i].LunchStartDate" type="date" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].LunchStartDate" class="text-danger"></span>
+                                <input asp-for="NewRecap.LunchSegments[@i].LunchStartDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.LunchSegments[@i].LunchStartDate" class="text-danger"></span>
 
-                                <input asp-for="NewRecap.WorkSegments[@i].LunchStart" type="time" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].LunchStart" class="text-danger"></span>
+                                <input asp-for="NewRecap.LunchSegments[@i].LunchStart" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.LunchSegments[@i].LunchStart" class="text-danger"></span>
 
                             </div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Lunch End:</label>
                             <div class="d-flex flex-column">
-                                <input asp-for="NewRecap.WorkSegments[@i].LunchEndDate" type="date" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].LunchEndDate" class="text-danger"></span>
+                                <input asp-for="NewRecap.LunchSegments[@i].LunchEndDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.LunchSegments[@i].LunchEndDate" class="text-danger"></span>
 
-                                <input asp-for="NewRecap.WorkSegments[@i].LunchEnd" type="time" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].LunchEnd" class="text-danger"></span>
+                                <input asp-for="NewRecap.LunchSegments[@i].LunchEnd" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.LunchSegments[@i].LunchEnd" class="text-danger"></span>
                             </div>
                         </div>
                         <div class="col-12 text-end">
-                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                            <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
                         </div>
                     </div>
                 </div>
@@ -244,35 +250,35 @@
     <!-- Support Segments -->
     <div class="col-6 mt-2">
         <label class="form-label" id="LabelText">Support Segments:</label>
-
+        <span asp-validation-for="NewRecap.SupportSegments" class="text-danger"></span>
         <div id="segmentsSupport" class="d-flex flex-column">
-            @for (var i = 0; i < Model.NewRecap.WorkSegments.Count; i++)
+            @for (var i = 0; i < Model.NewRecap.SupportSegments.Count; i++)
             {
                 <div class="card p-2" data-seg>
                     <div class="row g-2 align-items-end">
                         <div class="col-6">
-                            <label class="form-label">Lunch Start:</label>
+                            <label class="form-label">Support Start:</label>
                             <div class="d-flex flex-column">
-                                <input asp-for="NewRecap.WorkSegments[@i].SupportStartDate" type="date" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].SupportStartDate" class="text-danger"></span>
+                                <input asp-for="NewRecap.SupportSegments[@i].SupportStartDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.SupportSegments[@i].SupportStartDate" class="text-danger"></span>
 
-                                <input asp-for="NewRecap.WorkSegments[@i].SupportStart" type="time" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].SupportStart" class="text-danger"></span>
+                                <input asp-for="NewRecap.SupportSegments[@i].SupportStart" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.SupportSegments[@i].SupportStart" class="text-danger"></span>
 
                             </div>
                         </div>
                         <div class="col-6">
-                            <label class="form-label">Lunch End:</label>
+                            <label class="form-label">Support End:</label>
                             <div class="d-flex flex-column">
-                                <input asp-for="NewRecap.WorkSegments[@i].SupportEndDate" type="date" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].SupportEndDate" class="text-danger"></span>
+                                <input asp-for="NewRecap.SupportSegments[@i].SupportEndDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.SupportSegments[@i].SupportEndDate" class="text-danger"></span>
 
-                                <input asp-for="NewRecap.WorkSegments[@i].SupportEnd" type="time" class="form-control" />
-                                <span asp-validation-for="NewRecap.WorkSegments[@i].SupportEnd" class="text-danger"></span>
+                                <input asp-for="NewRecap.SupportSegments[@i].SupportEnd" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.SupportSegments[@i].SupportEnd" class="text-danger"></span>
                             </div>
                         </div>
                         <div class="col-12 text-end">
-                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                            <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
                         </div>
                     </div>
                 </div>
@@ -284,6 +290,50 @@
         </div>
     </div>
     <!-- End of Support Segments -->
+
+    <!-- Recap Segments -->
+    <div class="col-6 mt-2">
+        <label class="form-label" id="LabelText">Recap Segments:</label>
+        <span asp-validation-for="NewRecap.RecapSegments" class="text-danger"></span>
+        <div id="segmentsRecap" class="d-flex flex-column">
+            @for (var i = 0; i < Model.NewRecap.RecapSegments.Count; i++)
+            {
+                <div class="card p-2" data-seg>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-6">
+                            <label class="form-label">Recap Start:</label>
+                            <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.RecapSegments[@i].RecapStartDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.RecapSegments[@i].RecapStartDate" class="text-danger"></span>
+
+                                <input asp-for="NewRecap.RecapSegments[@i].RecapStart" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.RecapSegments[@i].RecapStart" class="text-danger"></span>
+
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Recap End:</label>
+                            <div class="d-flex flex-column">
+                                <input asp-for="NewRecap.RecapSegments[@i].RecapEndDate" type="date" class="form-control" />
+                                <span asp-validation-for="NewRecap.RecapSegments[@i].RecapEndDate" class="text-danger"></span>
+
+                                <input asp-for="NewRecap.RecapSegments[@i].RecapEnd" type="time" class="form-control" />
+                                <span asp-validation-for="NewRecap.RecapSegments[@i].RecapEnd" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="mt-2">
+            <button type="button" class="btn btn-outline-primary" onclick="addRecapSegment()">+ Add Recap Segment</button>
+        </div>
+    </div>
+    <!-- End of Recap Segments -->
 
     <!--Work Template-->
     <template id="segmentTemplateWork">
@@ -304,7 +354,7 @@
                     </div>
                 </div>
                 <div class="col-12 text-end">
-                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                    <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
                 </div>
             </div>
         </div>
@@ -318,21 +368,21 @@
                 <div class="col-12">
                     <label class="form-label">Travel Start:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].DriveStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
-                        <input name="NewRecap.WorkSegments[__INDEX__].DriveStart" type="time" class="form-control" />
-                
+                        <input name="NewRecap.TravelSegments[__INDEX__].DriveStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.TravelSegments[__INDEX__].DriveStart" type="time" class="form-control" />
+
                     </div>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Travel End:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].DriveEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
-                        <input name="NewRecap.WorkSegments[__INDEX__].DriveEnd" type="time" class="form-control" />
-                
+                        <input name="NewRecap.TravelSegments[__INDEX__].DriveEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.TravelSegments[__INDEX__].DriveEnd" type="time" class="form-control" />
+
                     </div>
                 </div>
                 <div class="col-12 text-end">
-                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                    <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
                 </div>
             </div>
         </div>
@@ -346,21 +396,21 @@
                 <div class="col-12">
                     <label class="form-label">Lunch Start:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].LunchStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
-                        <input name="NewRecap.WorkSegments[__INDEX__].LunchStart" type="time" class="form-control" />
+                        <input name="NewRecap.LunchSegments[__INDEX__].LunchStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.LunchSegments[__INDEX__].LunchStart" type="time" class="form-control" />
 
                     </div>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Lunch End:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].LunchEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
-                        <input name="NewRecap.WorkSegments[__INDEX__].LunchEnd" type="time" class="form-control" />
+                        <input name="NewRecap.LunchSegments[__INDEX__].LunchEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.LunchSegments[__INDEX__].LunchEnd" type="time" class="form-control" />
 
                     </div>
                 </div>
                 <div class="col-12 text-end">
-                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                    <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
                 </div>
             </div>
         </div>
@@ -374,33 +424,151 @@
                 <div class="col-12">
                     <label class="form-label">Support Start:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].SupportStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
-                        <input name="NewRecap.WorkSegments[__INDEX__].SupportStart" type="time" class="form-control" />
+                        <input name="NewRecap.SupportSegments[__INDEX__].SupportStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.SupportSegments[__INDEX__].SupportStart" type="time" class="form-control" />
 
                     </div>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Support End:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.WorkSegments[__INDEX__].SupportEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
-                        <input name="NewRecap.WorkSegments[__INDEX__].SupportEnd" type="time" class="form-control" />
+                        <input name="NewRecap.SupportSegments[__INDEX__].SupportEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.SupportSegments[__INDEX__].SupportEnd" type="time" class="form-control" />
 
                     </div>
                 </div>
                 <div class="col-12 text-end">
-                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeSegment(this)">Remove</button>
+                    <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
                 </div>
             </div>
         </div>
     </template>
     <!--End of Support Template-->
 
+    <!--Recap Time Template-->
+    <template id="segmentTemplateRecap">
+        <div class="card p-2 mt-2" data-seg>
+            <div class="row g-2 align-items-end">
+                <div class="col-12">
+                    <label class="form-label">Recap Start:</label>
+                    <div class="d-flex flex-column gap-2">
+                        <input name="NewRecap.RecapSegments[__INDEX__].RecapStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.RecapSegments[__INDEX__].RecapStart" type="time" class="form-control" />
+
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Recap End:</label>
+                    <div class="d-flex flex-column gap-2">
+                        <input name="NewRecap.RecapSegments[__INDEX__].RecapEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.RecapSegments[__INDEX__].RecapEnd" type="time" class="form-control" />
+
+                    </div>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="button" class="deleteBtn btn-danger" onclick="removeSegment(this)">Remove</button>
+                </div>
+            </div>
+        </div>
+    </template>
+    <!--End of Recap Time Template-->
+
+    <!-- Cable Used (in feet) -->
+    <div class="col-12 mt-4">
+        <label class="form-label fs-5" id="LabelText">Cable Used (feet):</label>
+        <small class="text-muted d-block mb-2" id="LabelText">
+            Enter start and end marks for each cable type (in feet). Leave blank if not used.
+        </small>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th id="LabelText">Cable Type</th>
+                        <th id="LabelText">Start (ft)</th>
+                        <th id="LabelText">End (ft)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="LabelText">Cat 6</td>
+                        <td>
+                            <span asp-validation-for="CableCat6.Cat6Start" class="text-danger"></span>
+                            <input asp-for="CableCat6.Cat6Start" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                        <td>
+                            <span asp-validation-for="CableCat6.Cat6End" class="text-danger"></span>
+                            <input asp-for="CableCat6.Cat6End" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="LabelText">18/2</td>
+                        <td>
+                            <span asp-validation-for="Cable182.Cable182Start" class="text-danger"></span>
+                            <input asp-for="Cable182.Cable182Start" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                        <td>
+                            <span asp-validation-for="Cable182.Cable182End" class="text-danger"></span>
+                            <input asp-for="Cable182.Cable182End" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="LabelText">18/4</td>
+                        <td>
+                            <span asp-validation-for="Cable184.Cable184Start" class="text-danger"></span>
+                            <input asp-for="Cable184.Cable184Start" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                        <td>
+                            <span asp-validation-for="Cable184.Cable184End" class="text-danger"></span>
+                            <input asp-for="Cable184.Cable184End" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="LabelText">18/6</td>
+                        <td>
+                            <span asp-validation-for="Cable186.Cable186Start" class="text-danger"></span>
+                            <input asp-for="Cable186.Cable186Start" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                        <td>
+                            <span asp-validation-for="Cable186.Cable186End" class="text-danger"></span>
+                            <input asp-for="Cable186.Cable186End" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="LabelText">Fiber</td>
+                        <td>
+                            <span asp-validation-for="CableFiber.FiberStart" class="text-danger"></span>
+                            <input asp-for="CableFiber.FiberStart" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                        <td>
+                            <span asp-validation-for="CableFiber.FiberEnd" class="text-danger"></span>
+                            <input asp-for="CableFiber.FiberEnd" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="LabelText">Coax</td>
+                        <td>
+                            <span asp-validation-for="CableCoax.CoaxStart" class="text-danger"></span>
+                            <input asp-for="CableCoax.CoaxStart" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                        <td>
+                            <span asp-validation-for="CableCoax.CoaxEnd" class="text-danger"></span>
+                            <input asp-for="CableCoax.CoaxEnd" type="number" min="0" class="form-control form-control-sm" />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- End Cable Used -->
+
     <script>
         // Start at current count so indexes continue correctly
-        let segIndexWork  = @(Model.NewRecap.WorkSegments?.Count ?? 1);
-        let segIndexDrive  = @(Model.NewRecap.WorkSegments?.Count ?? 1);
-        let segIndexSupport  = @(Model.NewRecap.WorkSegments?.Count ?? 1);
-        let segIndexLunch  = @(Model.NewRecap.WorkSegments?.Count ?? 1);
+        let segIndexWork  = @(Model.NewRecap.WorkSegments?.Count ?? 0);
+        let segIndexDrive  = @(Model.NewRecap.TravelSegments?.Count ?? 0);
+        let segIndexSupport  = @(Model.NewRecap.SupportSegments?.Count ?? 0);
+        let segIndexLunch  = @(Model.NewRecap.LunchSegments?.Count ?? 0);
+        let segIndexRecap  = @(Model.NewRecap.RecapSegments?.Count ?? 0);
 
         function addWorkSegment() {
           const tpl = document.getElementById('segmentTemplateWork').content.cloneNode(true);
@@ -434,10 +602,192 @@
           document.getElementById('segmentsSupport').append(...holder.childNodes);
         }
 
+        function addRecapSegment() {
+          const tpl = document.getElementById('segmentTemplateRecap').content.cloneNode(true);
+          const holder = document.createElement('div');
+          holder.appendChild(tpl);
+          holder.innerHTML = holder.innerHTML.replaceAll('__INDEX__', segIndexRecap++);
+          document.getElementById('segmentsRecap').append(...holder.childNodes);
+        }
+
         function removeSegment(btn) {
           const card = btn.closest('[data-seg]');
           if (card) card.remove();
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+             const el = document.querySelector(".js-employee-choices");
+             const trainingField = document.getElementById("TrainingEmployeeIds");
+             const trainingSet = new Set(); // tracks selected training employees
+
+             if (!el) return;
+
+             const choices = new Choices(el, {
+                 removeItemButton: true,
+                 searchEnabled: true,
+                 shouldSort: true,
+                 placeholderValue: 'Type to search employees',
+                 searchPlaceholderValue: 'Search employees...',
+                 allowHTML: true,
+
+                 callbackOnCreateTemplates: function (template) {
+                     return {
+                         // Dropdown rows
+                         choice: (classNames, data) => {
+                             return template(`
+                                 <div class="${classNames.item} ${classNames.itemChoice}"
+                                      data-id="${data.id}"
+                                      data-value="${data.value}"
+                                      data-choice
+                                      data-choice-selectable>
+
+                                     <span>${data.label}</span>
+
+                                     <label class="training-label"
+                                            style="margin-left: 25px; cursor:pointer; display:inline-flex; align-items:center;">
+                                         <input type="checkbox"
+                                                class="training-checkbox"
+                                                data-emp-id="${data.value}"
+                                                style="
+                                                    transform: scale(1.6);
+                                                    margin-right: 15px;
+                                                    cursor: pointer;
+                                                    width: 10px;
+                                                    height: 10px;
+                                                ">
+                                         Training
+                                     </label>
+                                 </div>
+                             `);
+                         },
+
+                         // Selected items (the tokens in the textbox)
+                         item: (classNames, data) => {
+                             return template(`
+                                 <div class="${classNames.item} ${data.highlighted ? classNames.highlightedState : classNames.itemSelectable}"
+                                      data-item
+                                      data-id="${data.id}"
+                                      data-value="${data.value}"
+                                      role="option">
+                                     ${data.label}
+                                     <span class="training-pill" data-emp-id="${data.value}"></span>
+
+                                     <button type="button"
+                                         class="remove-employee-btn"
+                                         data-remove-id="${data.value}"
+                                         style="
+                                             margin-left: 10px;
+                                             width: 18px;
+                                             height: 18px;
+                                             padding: 0;
+                                             border: none;
+                                             border-radius: 3px;
+                                             background-color: #dc3545; /* Bootstrap red */
+                                             color: white;
+                                             font-weight: bold;
+                                             cursor: pointer;
+                                             display: inline-flex;
+                                             align-items: center;
+                                             justify-content: center;
+                                             line-height: 1;
+                                             ">
+                                         &times;
+                                     </button>
+                                 </div>
+                             `);
+                         }
+                     };
+                 }
+             });
+
+             // When employees are added/removed, update "(Training)" labels on the tokens
+             el.addEventListener("change", function () {
+                 refreshTrainingBadges();
+             });
+
+             document.addEventListener("click", function (e) {
+                 const btn = e.target.closest(".remove-employee-btn");
+                 if (!btn) return;
+
+                 const empId = btn.getAttribute("data-remove-id");
+
+                 // Tell Choices.js to remove the item
+                 choices.removeActiveItemsByValue(empId);
+
+                 // If they had Training checked, remove them from trainingSet too
+                 trainingSet.delete(empId);
+                 trainingField.value = Array.from(trainingSet).join(",");
+
+                 // Update labels
+                 refreshTrainingBadges();
+
+                 // Stop event so dropdown doesn't open
+                 e.stopPropagation();
+             });
+
+             // --- Manually handle Training clicks so dropdown stays open and employee is not toggled ---
+
+             // 1) On mousedown, BEFORE Choices sees it, prevent focus change & propagation
+             document.addEventListener("mousedown", function (e) {
+                 const label = e.target.closest(".training-label");
+                 const checkbox = e.target.classList && e.target.classList.contains("training-checkbox")
+                     ? e.target
+                     : (label ? label.querySelector(".training-checkbox") : null);
+
+                 if (!checkbox) return;
+
+                 // Stop Choices from seeing this mousedown
+                 e.stopPropagation();
+                 e.preventDefault(); // prevent focus change / default behavior
+
+                 // Manually toggle the checkbox
+                 checkbox.checked = !checkbox.checked;
+
+                 // Fire a change event so our handler below runs
+                 const changeEvent = new Event("change", { bubbles: true });
+                 checkbox.dispatchEvent(changeEvent);
+             }, true); // capture phase so we run before Choices
+
+             // 2) Also block the click event so the browser / Choices don't toggle again
+             document.addEventListener("click", function (e) {
+                 const label = e.target.closest(".training-label");
+                 const isCheckbox = e.target.classList && e.target.classList.contains("training-checkbox");
+
+                 if (!label && !isCheckbox) return;
+
+                 e.stopPropagation();
+                 e.preventDefault();
+             }, true);
+
+             document.addEventListener("change", function (e) {
+                 if (!e.target.classList.contains("training-checkbox")) return;
+
+                 const empId = e.target.getAttribute("data-emp-id");
+
+                 if (e.target.checked) {
+                     trainingSet.add(empId);
+                 } else {
+                     trainingSet.delete(empId);
+                 }
+
+                 // Hidden input for server
+                 trainingField.value = Array.from(trainingSet).join(",");
+
+                 // Update the "(Training)" text on selected employees
+                 refreshTrainingBadges();
+             });
+
+             function refreshTrainingBadges() {
+                 document.querySelectorAll(".training-pill").forEach(span => {
+                     const empId = span.getAttribute("data-emp-id");
+                     if (trainingSet.has(empId)) {
+                         span.textContent = " (Training)";
+                     } else {
+                         span.textContent = "";
+                     }
+                 });
+             }
+         });
     </script>
 
     <!--Submit Button-->

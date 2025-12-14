@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.SqlClient;
 using NewRecap.Model;
-using System.Data.OleDb;
+using NewRecap.MyAppHelper;
 using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
@@ -11,15 +11,24 @@ namespace NewRecap.Pages.AdminPages
     [Authorize]
     public class BrowseStoreLocationsModel : PageModel
     {
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 11;
+        public int TotalCount { get; set; }
+        public int TotalPages => Math.Max(1, (int)Math.Ceiling((double)TotalCount / Math.Max(1, PageSize)));
         public List<LocationView> Locations { get; set; } = new List<LocationView>();
         public bool IsAdmin { get; set; }
 
         [TempData]
         public string ErrorMessage { get; set; }
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
 
-        public void OnGet()
+
+        public IActionResult OnGet(int pageNumber = 1, int pageSize = 11)
         {
+            if (!User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim != null)
@@ -28,16 +37,38 @@ namespace NewRecap.Pages.AdminPages
                 CheckIfUserIsAdmin(userId);
             }
             PopulateLocationList();
-        }
+
+            // === Pagination logic ===
+            PageNumber = pageNumber < 1 ? 1 : pageNumber;
+            PageSize = pageSize < 1 ? 11 : pageSize;
+
+            TotalCount = Locations.Count;
+
+            // Clamp PageNumber so it’s not past the last page
+            if (TotalCount > 0 && (PageNumber - 1) * PageSize >= TotalCount)
+            {
+                PageNumber = (int)Math.Ceiling((double)TotalCount / PageSize);
+            }
+
+            if (TotalCount > 0)
+            {
+                int skip = (PageNumber - 1) * PageSize;
+                Locations = Locations
+                    .Skip(skip)
+                    .Take(PageSize)
+                    .ToList();
+            }
+            return Page();
+        }// End of 'OnGet'.
 
         private void PopulateLocationList()
         {
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                string query = "SELECT StoreLocationID, StoreNumber, StoreCity, StoreState FROM StoreLocations";
-                OleDbCommand cmd = new OleDbCommand(query, conn);
+                string query = "SELECT StoreLocationID, StoreNumber, StoreCity, StoreState FROM StoreLocations ORDER BY StoreNumber";
+                SqlCommand cmd = new SqlCommand(query, conn);
                 conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
+                SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.HasRows)
                 {
                     while (reader.Read())
@@ -59,68 +90,40 @@ namespace NewRecap.Pages.AdminPages
         public IActionResult OnPostDelete(int id)
         {
             // delete the book from the database
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
                 conn.Open();
-                string cmdText = "SELECT COUNT(*) FROM RecapLocation WHERE LocationID = @LocationID";
-                OleDbCommand checkCmd = new OleDbCommand(cmdText, conn);
-                checkCmd.Parameters.AddWithValue("@LocationID", id);
-
-                
-                int usageCount = (int)checkCmd.ExecuteScalar();
-
-                if (usageCount > 0)
-                {
-                    ErrorMessage = "This location is in use and cannot be deleted.";
-                    return RedirectToPage();
-                }
-
-                
                 string deleteCmdText = "DELETE FROM StoreLocations WHERE StoreLocationID = @StoreLocationID";
-                OleDbCommand deleteCmd = new OleDbCommand(deleteCmdText, conn);
+                SqlCommand deleteCmd = new SqlCommand(deleteCmdText, conn);
                 deleteCmd.Parameters.AddWithValue("@StoreLocationID", id);
                 deleteCmd.ExecuteNonQuery();
-
             }
-
             return RedirectToPage();
         }//End of 'OnPostDelete'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
         {
-            using (var conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                // Adjust names to match your schema exactly:
-                // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID;";
+                string cmdText = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(cmdText, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userId);
+                conn.Open();
+                var result = cmd.ExecuteScalar();
 
-                using (var cmd = new OleDbCommand(query, conn))
+                // If SystemUserRole is 2, set IsUserAdmin to true
+                if (result != null && result.ToString() == "True")
                 {
-                    // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.AddWithValue("@SystemUserID", userId);
-
-                    conn.Open();
-                    var roleObj = cmd.ExecuteScalar();
-
-                    // Handle both null and DBNull
-                    if (roleObj != null && roleObj != DBNull.Value)
-                    {
-                        int role = Convert.ToInt32(roleObj);
-
-                        // If your schema uses AccountTypeID (1=user, 2=admin), adjust accordingly
-                        this.IsAdmin = (role == 2);
-                        ViewData["IsAdmin"] = this.IsAdmin;
-                    }
-                    else
-                    {
-                        // No row or NULL role
-                        this.IsAdmin = false;
-                        ViewData["IsAdmin"] = false;
-                    }
+                    IsAdmin = true;
+                    ViewData["IsAdmin"] = true;
+                }
+                else
+                {
+                    IsAdmin = false;
                 }
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
-}
+    }// End of 'BrowseStoreLocations' Class.
+}// End of 'namespace'.

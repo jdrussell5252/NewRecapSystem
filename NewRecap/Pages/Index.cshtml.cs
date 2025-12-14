@@ -1,22 +1,31 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Data.OleDb;
+using Microsoft.Data.SqlClient;
+using NewRecap.MyAppHelper;
+using System.Data;
 using System.Security.Claims;
 
 namespace NewRecap.Pages
 {
+    [Authorize]
     public class IndexModel : PageModel
     {
+
         private readonly ILogger<IndexModel> _logger;
         public bool IsAdmin { get; set; }
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
+
         public IndexModel(ILogger<IndexModel> logger)
         {
             _logger = logger;
         }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            var redirect = EnforcePasswordChange();
+            if (redirect != null)
+                return redirect;
+
             /*--------------------ADMIN PRIV----------------------*/
             // Check if the user is authenticated first
             if (User.Identity.IsAuthenticated)
@@ -30,44 +39,74 @@ namespace NewRecap.Pages
                 }
             }
             /*--------------------ADMIN PRIV----------------------*/
+            return Page();
         }//End of 'OnGet'.
+
+        private IActionResult EnforcePasswordChange()
+        {
+            // If not logged in, nothing to enforce
+            if (!User.Identity.IsAuthenticated)
+                return null;
+
+            // Get the current user ID from the auth cookie
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+                return null;
+
+            bool mustChange = false;
+
+            using (var conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string query = "SELECT MustChangePassword FROM SystemUser WHERE SystemUserID = @SystemUserID;";
+
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.Add("@SystemUserID", SqlDbType.Int).Value = userId;
+
+                    conn.Open();
+                    var result = cmd.ExecuteScalar();
+
+                    if (result != null && result != DBNull.Value)
+                    {
+                        mustChange = Convert.ToBoolean(result);
+                    }
+                }
+            }
+
+            if (mustChange)
+            {
+                // Force the user back to EditPassword until they fix it
+                return RedirectToPage("/Account/EditPassword");
+            }
+
+            // OK to continue
+            return null;
+        }// End of 'EnforcePasswordChange'.
+
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
         {
-            using (var conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                // Adjust names to match your schema exactly:
-                // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = ?;";
+                string cmdText = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(cmdText, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userId);
+                conn.Open();
+                var result = cmd.ExecuteScalar();
 
-                using (var cmd = new OleDbCommand(query, conn))
+                // If SystemUserRole is 2, set IsUserAdmin to true
+                if (result != null && result.ToString() == "True")
                 {
-                    // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.Add("@?", OleDbType.Integer).Value = userId;
-
-                    conn.Open();
-                    var roleObj = cmd.ExecuteScalar();
-
-                    // Handle both null and DBNull
-                    if (roleObj != null && roleObj != DBNull.Value)
-                    {
-                        int role = Convert.ToInt32(roleObj);
-
-                        // If your schema uses AccountTypeID (1=user, 2=admin), adjust accordingly
-                        this.IsAdmin = (role == 2);
-                        ViewData["IsAdmin"] = this.IsAdmin;
-                    }
-                    else
-                    {
-                        // No row or NULL role
-                        this.IsAdmin = false;
-                        ViewData["IsAdmin"] = false;
-                    }
+                    IsAdmin = true;
+                    ViewData["IsAdmin"] = true;
+                }
+                else
+                {
+                    IsAdmin = false;
                 }
             }
-        }
-
+        }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
     }
-}
+}// End of 'namespace'.

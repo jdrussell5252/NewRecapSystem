@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Data.SqlClient;
 using NewRecap.Model;
-using System.Data.OleDb;
+using NewRecap.MyAppHelper;
+
 using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
@@ -13,10 +15,14 @@ namespace NewRecap.Pages.AdminPages
         [BindProperty]
         public MyLocations NewLocation { get; set; }
         public bool IsAdmin { get; set; }
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
-        public void OnGet()
+
+        public IActionResult OnGet()
         {
             /*--------------------ADMIN PRIV----------------------*/
+            if (!User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim != null)
@@ -24,20 +30,42 @@ namespace NewRecap.Pages.AdminPages
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
-        }
+            return Page();
+            /*--------------------ADMIN PRIV----------------------*/
+        }// End of 'OnGet'.
 
         public IActionResult OnPost(int id)
         {
+            var storeCity = (NewLocation.StoreCity ?? string.Empty).Trim();
+            var storeState = (NewLocation.StoreState ?? string.Empty).Trim();
+            var storeNumber = NewLocation.StoreNumber;
+            const int dbMaxState = 2;
+            const int dbMaxCity = 30;
+
+            if (storeCity.Length > dbMaxCity)
+            {
+                ModelState.AddModelError("NewLocation.StoreCity", "City must be at most 30 characters.");
+            }
+
+            if (storeState.Length > dbMaxState)
+            {
+                ModelState.AddModelError("NewLocation.StoreState", "State must be at most 2 characters.");
+            }
+
+
+            if (storeNumber < 0)
+            {
+                ModelState.AddModelError("NewLocation.StoreNumber", "Store Number must be greater than 0."); ;
+            }
+
             if (ModelState.IsValid)
             {
-                using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+                using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
                 {
 
                     conn.Open();
-                    
-
                     string insertcmdText = "INSERT INTO StoreLocations (StoreNumber, StoreState, StoreCity) VALUES (@StoreNumber, @StoreState, @StoreCity);";
-                    OleDbCommand insertcmd = new OleDbCommand(insertcmdText, conn);
+                    SqlCommand insertcmd = new SqlCommand(insertcmdText, conn);
                     insertcmd.Parameters.AddWithValue("@StoreNumber", NewLocation.StoreNumber);
                     insertcmd.Parameters.AddWithValue("@StoreState", NewLocation.StoreState);
                     insertcmd.Parameters.AddWithValue("@StoreCity", NewLocation.StoreCity);
@@ -46,45 +74,37 @@ namespace NewRecap.Pages.AdminPages
                 }
                 return RedirectToPage("BrowseStoreLocations");
             }
-            // If the model state is not valid, return to the same page with validation errors
-            return Page();
-        }
+            else
+            {
+                OnGet();
+                // If the model state is not valid, return to the same page with validation errors
+                return Page();
+            }
+        }// End of 'OnPost'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
         {
-            using (var conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                // Adjust names to match your schema exactly:
-                // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID;";
+                string cmdText = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(cmdText, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userId);
+                conn.Open();
+                var result = cmd.ExecuteScalar();
 
-                using (var cmd = new OleDbCommand(query, conn))
+                // If SystemUserRole is 2, set IsUserAdmin to true
+                if (result != null && result.ToString() == "True")
                 {
-                    // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.AddWithValue("@SystemUserID", userId);
-
-                    conn.Open();
-                    var roleObj = cmd.ExecuteScalar();
-
-                    // Handle both null and DBNull
-                    if (roleObj != null && roleObj != DBNull.Value)
-                    {
-                        int role = Convert.ToInt32(roleObj);
-
-                        // If your schema uses AccountTypeID (1=user, 2=admin), adjust accordingly
-                        this.IsAdmin = (role == 2);
-                        ViewData["IsAdmin"] = this.IsAdmin;
-                    }
-                    else
-                    {
-                        // No row or NULL role
-                        this.IsAdmin = false;
-                        ViewData["IsAdmin"] = false;
-                    }
+                    IsAdmin = true;
+                    ViewData["IsAdmin"] = true;
+                }
+                else
+                {
+                    IsAdmin = false;
                 }
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
-}
+    }// End of 'AddStoreLocations' Class.
+}// End of 'namespace'.

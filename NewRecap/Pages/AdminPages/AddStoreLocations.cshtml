@@ -5,12 +5,15 @@
 
 <div class="row text-center">
     <div class="col-12">
-        <label class="form-label fs-1" id="LabelText">Location:</label>
+        <label class="form-label fs-1" id="LabelText">Add Location:</label>
     </div>
 </div>
-    <form method="post">
-        <div class="row">
+    
+<form method="post">
+        
+    <div class="row">
 
+        <!--===================Store Number Textbox==================-->
         <div class="row">
             <div class="col-4">
                 <label asp-for="NewLocation.StoreNumber" class="form-label" id="LabelText">Store Number:</label>
@@ -20,7 +23,9 @@
                 <span asp-validation-for="NewLocation.StoreNumber" class="text-danger"></span>
             </div>
         </div>
+        <!--===================End of Store Number Textbox==================-->
 
+        <!--===================State Textbox==================-->
         <div class="row">
             <div class="col-4">
                 <label asp-for="NewLocation.StoreState" class="form-label" id="LabelText">Store State:</label>
@@ -30,7 +35,9 @@
                 <span asp-validation-for="NewLocation.StoreState" class="text-danger"></span>
             </div>
         </div>
+        <!--===================End of State Textbox==================-->
 
+        <!--===================City Textbox==================-->
         <div class="row">
             <div class="col-4">
                 <label asp-for="NewLocation.StoreCity" class="form-label" id="LabelText">Store City:</label>
@@ -40,11 +47,14 @@
                 <span asp-validation-for="NewLocation.StoreCity" class="text-danger"></span>
             </div>
         </div>
+        <!--===================End of City Textbox==================-->
 
+        <!--===================Submit Button==================-->
         <div class="row my-2">
             <div class="col-12">
                 <button type="submit" class="form-control btn btn-primary"> Confirm </button>
             </div>
         </div>
-
-    </form>
+        <!--=================End of Submit Button==================-->
+    </div>
+</form>

@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Data.SqlClient;
 using NewRecap.Model;
-using System.Data.OleDb;
+using NewRecap.MyAppHelper;
 using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
@@ -13,9 +14,13 @@ namespace NewRecap.Pages.AdminPages
         [BindProperty]
         public LocationView Locations { get; set; } = new LocationView();
         public bool IsAdmin { get; set; }
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
-        public void OnGet(int id)
+
+        public IActionResult OnGet(int id)
         {
+            if (!User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
             /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -26,42 +31,55 @@ namespace NewRecap.Pages.AdminPages
             }
             /*--------------------ADMIN PRIV----------------------*/
             PopulateLocationList(id);
-        }
+            return Page();
+        }// End of 'OnGet'.
 
         public IActionResult OnPost(int id)
         {
+            var storeState = (Locations.StoreState ?? string.Empty).Trim();
+            const int dbMax = 2;
+
+
+            if (storeState.Length > dbMax)
+            {
+                ModelState.AddModelError("Locations.StoreState", "State must be at most 2 characters.");
+            }
+
+            if (string.IsNullOrWhiteSpace(storeState))
+            {
+                ModelState.AddModelError("Locations.StoreState", "State must be more than 0 characters.");
+            }
+
             if (ModelState.IsValid)
             {
-                try
+
+                using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
                 {
-                    using (OleDbConnection conn = new OleDbConnection(this.connectionString))
-                    {
-                        string cmdText = "UPDATE StoreLocations SET StoreState = @StoreState WHERE StoreLocationID = @StoreLocationID";
-                        OleDbCommand cmd = new OleDbCommand(cmdText, conn);
-                        cmd.Parameters.AddWithValue("@StoreState", Locations.StoreState);
-                        cmd.Parameters.AddWithValue("@StoreLocationID", id);
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
-                    }
-                    return RedirectToPage("BrowseStoreLocations");
+                    string cmdText = "UPDATE StoreLocations SET StoreState = @StoreState WHERE StoreLocationID = @StoreLocationID";
+                    SqlCommand cmd = new SqlCommand(cmdText, conn);
+                    cmd.Parameters.AddWithValue("@StoreState", Locations.StoreState);
+                    cmd.Parameters.AddWithValue("@StoreLocationID", id);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
                 }
-                catch
-                {
-                    throw;
-                }
+                return RedirectToPage("BrowseStoreLocations");
             }
-            return Page();
+            else
+            {
+                OnGet(id);
+                return Page();
+            }
         }//End of 'OnPost'.
 
         private void PopulateLocationList(int id)
         {
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                string query = "SELECT * FROM StoreLocations WHERE StoreLocationID = @StoreLocationID";
-                OleDbCommand cmd = new OleDbCommand(query, conn);
+                string query = "SELECT StoreLocationID, StoreState FROM StoreLocations WHERE StoreLocationID = @StoreLocationID";
+                SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@StoreLocationID", id);
                 conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
+                SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.HasRows)
                 {
                     while (reader.Read())
@@ -69,7 +87,7 @@ namespace NewRecap.Pages.AdminPages
                         Locations = new LocationView
                         {
                             StoreLocationID = reader.GetInt32(0),
-                            StoreState = reader.GetString(3)
+                            StoreState = reader.GetString(1)
                         };
                     }
                 }
@@ -79,35 +97,23 @@ namespace NewRecap.Pages.AdminPages
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
         {
-            using (var conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                // Adjust names to match your schema exactly:
-                // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID;";
+                string cmdText = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(cmdText, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userId);
+                conn.Open();
+                var result = cmd.ExecuteScalar();
 
-                using (var cmd = new OleDbCommand(query, conn))
+                // If SystemUserRole is 2, set IsUserAdmin to true
+                if (result != null && result.ToString() == "True")
                 {
-                    // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.AddWithValue("@SystemUserID", userId);
-
-                    conn.Open();
-                    var roleObj = cmd.ExecuteScalar();
-
-                    // Handle both null and DBNull
-                    if (roleObj != null && roleObj != DBNull.Value)
-                    {
-                        int role = Convert.ToInt32(roleObj);
-
-                        // If your schema uses AccountTypeID (1=user, 2=admin), adjust accordingly
-                        this.IsAdmin = (role == 2);
-                        ViewData["IsAdmin"] = this.IsAdmin;
-                    }
-                    else
-                    {
-                        // No row or NULL role
-                        this.IsAdmin = false;
-                        ViewData["IsAdmin"] = false;
-                    }
+                    IsAdmin = true;
+                    ViewData["IsAdmin"] = true;
+                }
+                else
+                {
+                    IsAdmin = false;
                 }
             }
         }//End of 'CheckIfUserIsAdmin'.

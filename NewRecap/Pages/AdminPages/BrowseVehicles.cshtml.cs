@@ -1,19 +1,30 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Data.SqlClient;
 using NewRecap.Model;
-using System.Data.OleDb;
+using NewRecap.MyAppHelper;
 using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
 {
+    [Authorize]
     public class BrowseVehiclesModel : PageModel
     {
         public List<VehicleView> Vehicles { get; set; } = new List<VehicleView>();
         public bool IsAdmin { get; set; }
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
 
-        public void OnGet()
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 5;
+        public int TotalCount { get; set; }
+        public int TotalPages => Math.Max(1, (int)Math.Ceiling((double)TotalCount / Math.Max(1, PageSize)));
+        public IActionResult OnGet(int pageNumber = 1, int pageSize = 5)
         {
+            if (!User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
             /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -24,18 +35,40 @@ namespace NewRecap.Pages.AdminPages
                 PopulateVehicleList();
             }
             /*--------------------ADMIN PRIV----------------------*/
-        }
+
+            // === Pagination logic ===
+            PageNumber = pageNumber < 1 ? 1 : pageNumber;
+            PageSize = pageSize < 1 ? 5 : pageSize;
+
+            TotalCount = Vehicles.Count;
+
+            // Clamp PageNumber so it’s not past the last page
+            if (TotalCount > 0 && (PageNumber - 1) * PageSize >= TotalCount)
+            {
+                PageNumber = (int)Math.Ceiling((double)TotalCount / PageSize);
+            }
+
+            if (TotalCount > 0)
+            {
+                int skip = (PageNumber - 1) * PageSize;
+                Vehicles = Vehicles
+                    .Skip(skip)
+                    .Take(PageSize)
+                    .ToList();
+            }
+            return Page();
+        }// End of 'OnGet'.
 
         public IActionResult OnPostDelete(int id)
         {
             // delete the book from the database
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
                 conn.Open();
 
 
                 string deleteCmdText = "DELETE FROM Vehicle WHERE VehicleID = @VehicleID";
-                OleDbCommand deleteCmd = new OleDbCommand(deleteCmdText, conn);
+                SqlCommand deleteCmd = new SqlCommand(deleteCmdText, conn);
                 deleteCmd.Parameters.AddWithValue("@VehicleID", id);
                 deleteCmd.ExecuteNonQuery();
 
@@ -46,12 +79,12 @@ namespace NewRecap.Pages.AdminPages
 
         private void PopulateVehicleList()
         {
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                string query = "SELECT VehicleID, VehicleNumber, VehicleVin, VehicleName FROM Vehicle";
-                OleDbCommand cmd = new OleDbCommand(query, conn);
+                string query = "SELECT * FROM Vehicle";
+                SqlCommand cmd = new SqlCommand(query, conn);
                 conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
+                SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.HasRows)
                 {
                     while (reader.Read())
@@ -59,9 +92,8 @@ namespace NewRecap.Pages.AdminPages
                         VehicleView AVehicle = new VehicleView
                         {
                             VehicleID = reader.GetInt32(0),
-                            VehicleNumber = reader.GetInt32(1),
-                            VehicleVin = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                            VehicleName = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+                            VehicleNumber = reader.GetString(1),
+                            VehicleModel = reader.IsDBNull(2) ? string.Empty : reader.GetString(2)
                         };
                         Vehicles.Add(AVehicle);
 
@@ -73,35 +105,23 @@ namespace NewRecap.Pages.AdminPages
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
         {
-            using (var conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                // Adjust names to match your schema exactly:
-                // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID;";
+                string cmdText = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(cmdText, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userId);
+                conn.Open();
+                var result = cmd.ExecuteScalar();
 
-                using (var cmd = new OleDbCommand(query, conn))
+                // If SystemUserRole is 2, set IsUserAdmin to true
+                if (result != null && result.ToString() == "True")
                 {
-                    // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.AddWithValue("@SystemUserID", userId);
-
-                    conn.Open();
-                    var roleObj = cmd.ExecuteScalar();
-
-                    // Handle both null and DBNull
-                    if (roleObj != null && roleObj != DBNull.Value)
-                    {
-                        int role = Convert.ToInt32(roleObj);
-
-                        // If your schema uses AccountTypeID (1=user, 2=admin), adjust accordingly
-                        this.IsAdmin = (role == 2);
-                        ViewData["IsAdmin"] = this.IsAdmin;
-                    }
-                    else
-                    {
-                        // No row or NULL role
-                        this.IsAdmin = false;
-                        ViewData["IsAdmin"] = false;
-                    }
+                    IsAdmin = true;
+                    ViewData["IsAdmin"] = true;
+                }
+                else
+                {
+                    IsAdmin = false;
                 }
             }
         }//End of 'CheckIfUserIsAdmin'.

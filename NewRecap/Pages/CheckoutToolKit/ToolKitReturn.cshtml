@@ -1,0 +1,34 @@
+﻿@page
+@model NewRecap.Pages.CheckoutToolKit.ToolKitReturnModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Return Toolkits</label>
+    </div>
+</div>
+
+<form method="post">
+    <div class="row my-2">
+        <div class="col-12">
+            <label class="form-label" id="LabelText" asp-for="SelectedToolKitId">Select Toolkit:</label>
+        </div>
+        <div class="col-12">
+            <select asp-for="SelectedToolKitId"
+                    asp-items="Model.ToolKitOptions"
+                    class="form-select">
+                <option value="">-- Select a toolkit --</option>
+            </select>
+            <span asp-validation-for="SelectedToolKitId" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row my-2">
+        <div class="col-12">
+            <button type="submit" class="form-control btn btn-primary">
+                <i class="bi bi-box-arrow-in-right"></i> Checkout
+            </button>
+        </div>
+    </div>
+</form>

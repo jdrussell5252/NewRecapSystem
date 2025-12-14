@@ -1,19 +1,26 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Data.SqlClient;
 using NewRecap.Model;
-using System.Data.OleDb;
+using NewRecap.MyAppHelper;
 using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
 {
+    [Authorize]
     public class EditEmployeeUsernameModel : PageModel
     {
         [BindProperty]
         public EmployeeView Employees { get; set; } = new EmployeeView();
         public bool IsAdmin { get; set; }
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
-        public void OnGet(int id)
+
+        public IActionResult OnGet(int id)
         {
+            if (!User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim != null)
@@ -22,35 +29,53 @@ namespace NewRecap.Pages.AdminPages
                 CheckIfUserIsAdmin(userId);
             }
             PopulateEmployeeList(id);
+            return Page();
         }
 
         public IActionResult OnPost(int id)
         {
+            var userName = (Employees.EmployeeUsername ?? string.Empty).Trim();
+            const int dbMaxName = 50;
+
+            if (userName.Length > dbMaxName)
+            {
+                ModelState.AddModelError("Employees.EmployeeUsername", "Username must be at most 50 characters.");
+            }
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                ModelState.AddModelError("Employees.EmployeeUsername", "Username must be more than 0 characters.");
+            }
+
+
             if (ModelState.IsValid)
             {
-                using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+                using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
                 {
-                    string cmdText = "UPDATE Employee SET EmployeeFName = @EmployeeFName WHERE EmployeeID = @EmployeeID";
-                    OleDbCommand cmd = new OleDbCommand(cmdText, conn);
-                    cmd.Parameters.AddWithValue("@EmployeeFName", Employees.EmployeeFName);
+                    string cmdText = "UPDATE SystemUser SET SystemUsername = @SystemUsername WHERE EmployeeID = @EmployeeID";
+                    SqlCommand cmd = new SqlCommand(cmdText, conn);
+                    cmd.Parameters.AddWithValue("@SystemUsername", Employees.EmployeeUsername);
                     cmd.Parameters.AddWithValue("@EmployeeID", id);
                     conn.Open();
                     cmd.ExecuteNonQuery();
                 }
                 return RedirectToPage("BrowseEmployees");
             }
-            return Page();
+            else
+            {
+                OnGet(id);
+                return Page();
+            }
         }//End of 'OnPost'.
 
         private void PopulateEmployeeList(int id)
         {
-            using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
                 string query = "SELECT EmployeeID, SystemUsername FROM SystemUser WHERE EmployeeID = @EmployeeID";
-                OleDbCommand cmd = new OleDbCommand(query, conn);
+                SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@EmployeeID", id);
                 conn.Open();
-                OleDbDataReader reader = cmd.ExecuteReader();
+                SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.HasRows)
                 {
                     while (reader.Read())
@@ -68,35 +93,23 @@ namespace NewRecap.Pages.AdminPages
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
         {
-            using (var conn = new OleDbConnection(this.connectionString))
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                // Adjust names to match your schema exactly:
-                // If your column is AccountTypeID instead of SystemUserRole, swap it below.
-                string query = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID;";
+                string cmdText = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(cmdText, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userId);
+                conn.Open();
+                var result = cmd.ExecuteScalar();
 
-                using (var cmd = new OleDbCommand(query, conn))
+                // If SystemUserRole is 2, set IsUserAdmin to true
+                if (result != null && result.ToString() == "True")
                 {
-                    // OleDb uses positional parameters (names ignored), so add in the same order as the '?'..
-                    cmd.Parameters.AddWithValue("@SystemUserID", userId);
-
-                    conn.Open();
-                    var roleObj = cmd.ExecuteScalar();
-
-                    // Handle both null and DBNull
-                    if (roleObj != null && roleObj != DBNull.Value)
-                    {
-                        int role = Convert.ToInt32(roleObj);
-
-                        // If your schema uses AccountTypeID (1=user, 2=admin), adjust accordingly
-                        this.IsAdmin = (role == 2);
-                        ViewData["IsAdmin"] = this.IsAdmin;
-                    }
-                    else
-                    {
-                        // No row or NULL role
-                        this.IsAdmin = false;
-                        ViewData["IsAdmin"] = false;
-                    }
+                    IsAdmin = true;
+                    ViewData["IsAdmin"] = true;
+                }
+                else
+                {
+                    IsAdmin = false;
                 }
             }
         }//End of 'CheckIfUserIsAdmin'.

@@ -1,12 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Data.SqlClient;
 using NewRecap.Model;
 using NewRecap.MyAppHelper;
-using System.Data.OleDb;
+
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 
 namespace NewRecap.Pages.Account
 {
+    //[Authorize]
     public class RegisterModel : PageModel
     {
         [BindProperty]
@@ -14,15 +18,31 @@ namespace NewRecap.Pages.Account
 
         public List<string> PasswordErrors { get; set; } = new();
 
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
+
+        public bool IsAdmin { get; set; }
+        public void OnGet()
+        {
+            /*--------------------ADMIN PRIV----------------------*/
+            // Safely access the NameIdentifier claim
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null)
+            {
+                int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                CheckIfUserIsAdmin(userId);
+            }
+        }// End of 'OnGet'.
 
         public IActionResult OnPost()
         {
             PasswordErrors.Clear();
-            string password = NewUser.Password;
+            var firstName = (NewUser.FirstName ?? string.Empty).Trim();
+            var lastName = (NewUser.LastName ?? string.Empty).Trim();
+            string password = (NewUser.Password ?? string.Empty).Trim();
+            var userName = (NewUser.UserName ?? string.Empty).Trim();
+            const int dbMaxName = 50;
+            const int dbMaxPassword = 20;
 
-            if (password == null)
-                return Page();
+
             if (password.Length < 10)
                 PasswordErrors.Add("Password must be at least 10 characters long.");
             if (!Regex.IsMatch(password, @"\d"))
@@ -32,44 +52,93 @@ namespace NewRecap.Pages.Account
             if (!Regex.IsMatch(password, @"[a-z]"))
                 PasswordErrors.Add("Password must contain at least one lowercase letter.");
 
-            if (PasswordErrors.Count > 0)
+            if (password.Length > dbMaxPassword)
             {
-                return Page();
+                ModelState.AddModelError("NewUser.Password", "Password must be at most 50 characters.");
             }
 
+            if (firstName.Length > dbMaxName)
+            {
+                ModelState.AddModelError("NewUser.FirstName", "First name must be at most 50 characters.");
+            }
+
+            if (firstName.Length > dbMaxName)
+            {
+                ModelState.AddModelError("NewUser.LastName", "Last name must be at most 50 characters.");
+            }
+
+            if (userName.Length > dbMaxName)
+            {
+                ModelState.AddModelError("NewUser.UserName", "Username must be at most 50 characters.");
+            }
 
             if (ModelState.IsValid)
             {
-                using (OleDbConnection conn = new OleDbConnection(this.connectionString))
+                using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
                 {
                     conn.Open();
-                    string cmdEmployeeText = "INSERT INTO Employee (EmployeeFName, EmployeeLName) VALUES (?, ?);";
-                    OleDbCommand cmdE = new OleDbCommand(cmdEmployeeText, conn);        
-                    cmdE.Parameters.AddWithValue("?", NewUser.FirstName);
-                    cmdE.Parameters.AddWithValue("?", NewUser.LastName);
+                    string cmdEmployeeText = "INSERT INTO Employee (EmployeeFName, EmployeeLName) VALUES (@EmployeeFName, @EmployeeLName);";
+                    SqlCommand cmdE = new SqlCommand(cmdEmployeeText, conn);        
+                    cmdE.Parameters.AddWithValue("@EmployeeFName", NewUser.FirstName);
+                    cmdE.Parameters.AddWithValue("@EmployeeLName", NewUser.LastName);
                     cmdE.ExecuteNonQuery();
 
                     // Get the new AutoNumber (must be SAME connection)
                     int employeeId;
-                    using (var idCmd = new OleDbCommand("SELECT @@IDENTITY;", conn))
+                    using (var idCmd = new SqlCommand("SELECT @@IDENTITY;", conn))
                     {
                         employeeId = Convert.ToInt32(idCmd.ExecuteScalar());
                     }
 
-                    string cmdSystemUserText = "INSERT INTO SystemUser (EmployeeID, SystemUsername, SystemUserPassword, SystemUserRole, SystemUserEmail) VALUES (?, ?, ?, ?, ?);";
-                    OleDbCommand cmdS = new OleDbCommand(cmdSystemUserText, conn);
-                    cmdS.Parameters.AddWithValue("?", employeeId);
-                    cmdS.Parameters.AddWithValue("?", NewUser.UserName);
-                    cmdS.Parameters.AddWithValue("?", AppHelper.GeneratePasswordHash(NewUser.Password));
-                    cmdS.Parameters.AddWithValue("?", 3);
-                    cmdS.Parameters.AddWithValue("?", NewUser.Email);
+                    string cmdSystemUserText = "INSERT INTO SystemUser (EmployeeID, SystemUsername, SystemUserPassword, SystemUserRole, SystemUserEmail, MustChangePassword) VALUES (@EmployeeID, @SystemUsername, @SystemUserPassword, @SystemUserRole, @SystemUserEmail, @MustChangePassword);";
+                    SqlCommand cmdS = new SqlCommand(cmdSystemUserText, conn);
+                    cmdS.Parameters.AddWithValue("@EmployeeID", employeeId);
+                    cmdS.Parameters.AddWithValue("@SystemUsername", NewUser.UserName);
+                    cmdS.Parameters.AddWithValue("@SystemUserPassword", AppHelper.GeneratePasswordHash(NewUser.Password));
+                    cmdS.Parameters.AddWithValue("@SystemUserRole", false);
+                    cmdS.Parameters.AddWithValue("@SystemUserEmail", NewUser.Email);
+                    cmdS.Parameters.AddWithValue("@MustChangePassword", true);
                     cmdS.ExecuteNonQuery();
                     
                 }
-                    return RedirectToPage("/Account/Login");
+                return RedirectToPage("/AdminPages/BrowseEmployees");
             }
-
-            return Page();
+            else
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
+                {
+                    int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                    CheckIfUserIsAdmin(userId);
+                }
+                return Page();
+            }
         }//End of 'OnPost'.
+
+        /*--------------------ADMIN PRIV----------------------*/
+        private void CheckIfUserIsAdmin(int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string cmdText = "SELECT SystemUserRole FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(cmdText, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userId);
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                // If SystemUserRole is 1, set IsUserAdmin to true
+                if (result != null && result.ToString() == "True")
+                {
+                    IsAdmin = true;
+                    ViewData["IsAdmin"] = true;
+                }
+                else
+                {
+                    IsAdmin = false;
+                }
+            }
+        }//End of 'CheckIfUserIsAdmin'.
+        /*--------------------ADMIN PRIV----------------------*/
+
     }//End of 'Register'.
 }//End of 'namespace'.

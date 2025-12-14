@@ -8,3 +8,20 @@
         <label class="form-label fs-1" id="LabelText">Edit Employee Last Name</label>
     </div>
 </div>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="row my-2">
+        <div class="col-12">
+            <label asp-for="Employees.EmployeeLName" class="form-label" id="LabelText">Last Name:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="Employees.EmployeeLName" type="text" class="form-control" />
+            <span asp-validation-for="Employees.EmployeeLName" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col-12">
+            <button type="submit" class="form-control btn btn-primary">Confirm Edit</button>
+        </div>
+    </div>
+</form>
