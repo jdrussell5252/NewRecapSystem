@@ -10,10 +10,10 @@ using System.Security.Claims;
 namespace NewRecap.Pages.CheckoutToolKit
 {
     [Authorize]
+    [BindProperties]
     public class ToolKitCheckoutModel : PageModel
     {
         public List<SelectListItem> ToolKitOptions { get; set; } = new();
-        [BindProperty]
         public int SelectedToolKitId { get; set; }
         public bool IsAdmin { get; set; }
 
@@ -40,6 +40,7 @@ namespace NewRecap.Pages.CheckoutToolKit
 
         public IActionResult OnPost()
         {
+
 
             if (SelectedToolKitId <= 0)
             {

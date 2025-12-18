@@ -231,7 +231,7 @@
             var isAdmin = ViewData["IsAdmin"] != null && (bool)ViewData["IsAdmin"];
             @if (isAdmin)
             {
-                <form method="post">
+                <!--<form method="post">
                     <button class="deleteBtn btn-danger"
                             onclick="return confirm('Are you sure?')"
                             asp-page-handler="Delete"
@@ -239,7 +239,7 @@
                             asp-route-isHardware="@recap.IsHardware">
                         Delete
                     </button>
-                </form>
+                </form>-->
             }
 
             <!--END OF ADMINPRIVS-->
@@ -392,7 +392,7 @@
             var isAdmin = ViewData["IsAdmin"] != null && (bool)ViewData["IsAdmin"];
             @if (isAdmin)
             {
-                <form method="post">
+                <!--<form method="post">
                     <button class="deleteBtn btn-danger"
                             onclick="return confirm('Are you sure?')"
                             asp-page-handler="Delete"
@@ -400,7 +400,7 @@
                             asp-route-recapType="@(recap.IsHardwareRecap ? "Hardware" : "Standard")">
                         Delete
                     </button>
-                </form>
+                </form>-->
             }
             <!--END OF ADMINPRIVS-->
             <hr style="border: 1px solid white; opacity: 1;" />

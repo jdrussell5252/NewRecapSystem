@@ -10,19 +10,17 @@
 </div>
 
 <form method="post">
-    <div class="row my-2">
-        <div class="col-12">
-            <label class="form-label" id="LabelText" asp-for="SelectedToolKitId">Select Toolkit:</label>
-        </div>
-        <div class="col-12">
-            <select asp-for="SelectedToolKitId"
-                    asp-items="Model.ToolKitOptions"
-                    class="form-select">
-                <option value="">-- Select a toolkit --</option>
-            </select>
-            <span asp-validation-for="SelectedToolKitId" class="text-danger"></span>
-        </div>
+    <!--Toolkit DropDown-->
+    <div class="col-6 mt-2">
+        <label asp-for="SelectedToolKitId" class="form-label" id="LabelText">Toolkits:</label>
     </div>
+    <div class="col-12">
+        <select asp-for="SelectedToolKitId" asp-items="Model.ToolKitOptions" class="form-control">
+            <option value="0">---Select Toolkit---</option>
+        </select>
+        <span asp-validation-for="SelectedToolKitId" class="text-danger"></span>
+    </div>
+    <!--End of Toolkit DropDown-->
 
     <div class="row my-2">
         <div class="col-12">

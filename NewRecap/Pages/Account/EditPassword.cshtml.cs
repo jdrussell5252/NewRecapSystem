@@ -15,8 +15,6 @@ namespace NewRecap.Pages.Account
     {
         [BindProperty]
         public Password NewPassword { get; set; } = new Password();
-        [BindProperty]
-        public string ConfirmPassword { get; set; }
 
         public List<string> PasswordErrors { get; set; } = new();
         public bool IsAdmin { get; set; }
@@ -58,7 +56,7 @@ namespace NewRecap.Pages.Account
             if (!Regex.IsMatch(password, @"[a-z]"))
                 PasswordErrors.Add("Password must contain at least one lowercase letter.");
 
-            if (NewPassword.MyPassword != ConfirmPassword)
+            if (NewPassword.MyPassword != NewPassword.ConfirmPassword)
             {
                 ModelState.AddModelError(string.Empty, "Passwords do not match.");
             }

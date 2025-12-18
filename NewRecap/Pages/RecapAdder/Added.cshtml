@@ -13,7 +13,7 @@
 
 <a id="openMail" href="@mailtoUrl" style="display:none;">open</a>
 
-<script>
+<!--<script>
     (function () {
       var a = document.getElementById('openMail');
       if (a && a.href) {
@@ -26,16 +26,35 @@
         }, 1200);
       }
     })();
+</script>-->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var a = document.getElementById('openMail');
+        if (a && a.href) {
+            // Delay opening mail app to allow the page to fully render
+            setTimeout(function () {
+                window.location.href = a.href;
+
+                // Show fallback link after another short delay
+                setTimeout(function(){
+                    var fb = document.getElementById('fallback');
+                    if (fb) fb.style.display = 'block';
+                }, 1200);
+            }, 500); // 500ms delay before triggering mailto
+        }
+    });
 </script>
 
+
 <div id="fallback" style="display:none; margin-top:1rem;">
-    <p>If your mail app didn’t open, click here:</p>
+    <p id="LabelText">If your mail app didn’t open, click here:</p>
     <p><a href="@mailtoUrl">Open draft again</a></p>
 </div>
 
 <hr />
 @if (!string.IsNullOrWhiteSpace(to) || !string.IsNullOrWhiteSpace(subject))
 {
-    <p><strong>To:</strong> @to</p>
-    <p><strong>Subject:</strong> @subject</p>
+    <p id="LabelText"><strong>To:</strong> @to</p>
+    <p id="LabelText"><strong>Subject:</strong> @subject</p>
 }

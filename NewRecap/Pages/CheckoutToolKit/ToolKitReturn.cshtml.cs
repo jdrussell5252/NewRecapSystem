@@ -9,13 +9,12 @@ using System.Security.Claims;
 namespace NewRecap.Pages.CheckoutToolKit
 {
     [Authorize]
+    [BindProperties]
     public class ToolKitReturnModel : PageModel
     {
         public List<SelectListItem> ToolKitOptions { get; set; } = new();
-        [BindProperty]
         public int SelectedToolKitId { get; set; }
         public bool IsAdmin { get; set; }
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
         public IActionResult OnGet()
         {
             int? employeeId = null;
@@ -34,7 +33,7 @@ namespace NewRecap.Pages.CheckoutToolKit
                 CheckIfUserIsAdmin(userId);
                 employeeId = GetEmployeeIdForUser(userId);
             }
-            /*--------------------ADMIN PRIV----------------------*/
+            /*--------------------End of ADMIN PRIV----------------------*/
 
             PopulateToolKitOptions(employeeId);
             return Page();
@@ -42,13 +41,10 @@ namespace NewRecap.Pages.CheckoutToolKit
 
         public IActionResult OnPost()
         {
-            if (!ModelState.IsValid)
-                return Page();
 
             if (SelectedToolKitId <= 0)
             {
                 ModelState.AddModelError("SelectedToolKitId", "Please select a toolkit to return.");
-                return Page();
             }
 
             // Get SystemUserID from claims
@@ -64,7 +60,6 @@ namespace NewRecap.Pages.CheckoutToolKit
             if (employeeId == 0)
             {
                 ModelState.AddModelError(string.Empty, "Could not resolve your employee record.");
-                return Page();
             }
 
             if (ModelState.IsValid)
@@ -95,8 +90,11 @@ namespace NewRecap.Pages.CheckoutToolKit
 
                 return RedirectToPage("/Index");
             }
-
-            return Page();
+            else
+            {
+                OnGet();
+                return Page();
+            }
         }// End of 'OnPost'.
 
         private int GetEmployeeIdForUser(int systemUserID)
