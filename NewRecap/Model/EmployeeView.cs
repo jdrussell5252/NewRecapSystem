@@ -8,5 +8,6 @@
         public bool EmployeeRole { get; set; }
         public int EmployeeID { get; set; }
         public int SystemUserID { get; set;  }
+        public bool IsActive { get; set; }
     }// End of 'EmployeeView' Class.
 }// End of 'namespace'.

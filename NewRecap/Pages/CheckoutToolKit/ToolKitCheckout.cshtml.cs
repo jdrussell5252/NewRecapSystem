@@ -17,18 +17,25 @@ namespace NewRecap.Pages.CheckoutToolKit
         public int SelectedToolKitId { get; set; }
         public bool IsAdmin { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
-            /*--------------------ADMIN PRIV----------------------*/
+
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            /*--------------------ADMIN PRIV----------------------*/
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                if (!IsUserActive(userId))
+                {
+                    return Forbid();
+                }
                 CheckIfUserIsAdmin(userId);
             }
             /*--------------------End of ADMIN PRIV----------------------*/
+
             PopulateToolKitOptions();
+            return Page();
         }// End of 'OnGet'.
 
         public IActionResult OnPost()
@@ -84,7 +91,7 @@ namespace NewRecap.Pages.CheckoutToolKit
             }
 
             return RedirectToPage("/Index");
-        }
+        }// End of 'OnPost'.
 
         private void PopulateToolKitOptions()
         {
@@ -117,7 +124,7 @@ namespace NewRecap.Pages.CheckoutToolKit
                     }
                 }
             }
-        }
+        }// End of 'PopulateToolKitOptions'.
 
         private int GetEmployeeIdForUser(int systemUserID)
         {
@@ -138,7 +145,22 @@ namespace NewRecap.Pages.CheckoutToolKit
                 }
             }
             return 0;
-        }
+        }// End of 'GetEmployeeIdForUser'.
+
+        private bool IsUserActive(int userID)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = "SELECT IsActive FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userID);
+
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                return result != null && (bool)result;
+            }
+        }// End of 'IsUserActive'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

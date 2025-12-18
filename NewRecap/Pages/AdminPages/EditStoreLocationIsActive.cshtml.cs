@@ -1,19 +1,16 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
 using NewRecap.Model;
 using NewRecap.MyAppHelper;
-using System.Data;
 using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages
 {
-    [Authorize]
-    public class EditVehicleNumberModel : PageModel
+    public class EditStoreLocationIsActiveModel : PageModel
     {
         [BindProperty]
-        public VehicleView Vehicles { get; set; } = new VehicleView();
+        public LocationView Locations { get; set; } = new LocationView();
         public bool IsAdmin { get; set; }
 
         public IActionResult OnGet(int id)
@@ -23,81 +20,66 @@ namespace NewRecap.Pages.AdminPages
                 return Forbid();
             }
 
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
-            /*--------------------ADMIN PRIV----------------------*/
-
-            PopulateLocationList(id);
+            PopulateEmployeeList(id);
             return Page();
         }// End of 'OnGet'.
 
+        // Pass in the ID of the Employee.
         public IActionResult OnPost(int id)
         {
-            // normalize the value first
-            var vehicleNumber = (Vehicles.VehicleNumber ?? string.Empty).Trim();
-            const int dbMax = 6;
-
-            if (vehicleNumber.Length > dbMax)
-            {
-                ModelState.AddModelError("Vehicles.VehicleNumber", "Vehicle number must be at most 6 characters."); ;
-            }
-
-            if (string.IsNullOrWhiteSpace(vehicleNumber))
-            {
-                ModelState.AddModelError("Vehicles.VehicleNumber", "Vehicle Number must be more than 0 characters.");
-            }
-
+            // If the model state is valid, it will run the update.
             if (ModelState.IsValid)
             {
-
-
+                // Set up the connection with the DB.
                 using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
                 {
-                    string cmdText = "UPDATE Vehicle SET VehicleNumber = @VehicleNumber WHERE VehicleID = @VehicleID";
-                    using (SqlCommand cmd = new SqlCommand(cmdText, conn))
-                    {
-                        // use SqlParameter with explicit type/size instead of AddWithValue
-                        cmd.Parameters.Add("@VehicleNumber", SqlDbType.NVarChar, dbMax).Value = vehicleNumber;
-                        cmd.Parameters.Add("@VehicleID", SqlDbType.Int).Value = id;
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
-                    }
+                    // Query for update
+                    string cmdText = "UPDATE StoreLocations SET IsActive = @IsActive WHERE StoreLocationID = @StoreLocationID";
+                    // Create the command.
+                    SqlCommand cmd = new SqlCommand(cmdText, conn);
+                    // Add the value to the command
+                    cmd.Parameters.AddWithValue("@IsActive", Locations.IsActive);
+                    cmd.Parameters.AddWithValue("@StoreLocationID", id);
+                    // Open the connection with the db.
+                    conn.Open();
+                    // Execute the command.
+                    cmd.ExecuteNonQuery();
                 }
-                return RedirectToPage("BrowseVehicles");
-                
-
+                // Redirect to page if the model is valid.
+                return RedirectToPage("BrowseStoreLocations");
             }
             else
             {
                 OnGet(id);
+                // Return the page if the model state is not valid.
                 return Page();
             }
-        }// End of 'OnPost'.
+        }//End of 'OnPost'.
 
-
-        private void PopulateLocationList(int id)
+        private void PopulateEmployeeList(int id)
         {
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                string query = "SELECT VehicleID, VehicleNumber FROM Vehicle WHERE VehicleID = @VehicleID";
+                string query = "SELECT StoreLocationID, IsActive FROM StoreLocations WHERE StoreLocationID = @StoreLocationID";
                 SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@VehicleID", id);
+                cmd.Parameters.AddWithValue("@StoreLocationID", id);
                 conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.HasRows)
                 {
                     while (reader.Read())
                     {
-                        Vehicles = new VehicleView
+                        Locations = new LocationView
                         {
-                            VehicleID = reader.GetInt32(0),
-                            VehicleNumber = reader.GetString(1)
+                            StoreLocationID = reader.GetInt32(0),
+                            IsActive = reader.GetBoolean(1)
                         };
                     }
                 }
@@ -115,7 +97,7 @@ namespace NewRecap.Pages.AdminPages
                 conn.Open();
                 var result = cmd.ExecuteScalar();
 
-                // If SystemUserRole is True, set IsUserAdmin to true
+                // If SystemUserRole is 2, set IsUserAdmin to true
                 if (result != null && result.ToString() == "True")
                 {
                     IsAdmin = true;
@@ -128,5 +110,5 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }// End of 'EditVehicleNumber' Class.
+    }// End of 'EditStoreLocationIsActive' Class.
 }// End of 'namespace'.

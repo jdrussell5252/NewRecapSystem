@@ -27,19 +27,26 @@ namespace NewRecap.Pages.RecapAdder
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
-            PopulateEmployeeOptions();
-            PopulateLocationList();
-            /*--------------------ADMIN PRIV----------------------*/
+
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            /*--------------------ADMIN PRIV----------------------*/
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                if (!IsUserActive(userId))
+                {
+                    return Forbid();
+                }
                 CheckIfUserIsAdmin(userId);
             }
             /*--------------------ADMIN PRIV----------------------*/
+
+            PopulateEmployeeOptions();
+            PopulateLocationList();
+            return Page();
         }// End of 'OnGet'.
 
         public IActionResult OnPost()
@@ -166,7 +173,7 @@ namespace NewRecap.Pages.RecapAdder
             double recapTotal = recapSegs.Sum(s =>
                 Hours(s.RecapStartDate, s.RecapStart, s.RecapEndDate, s.RecapEnd));
 
-            double overallOtherTotal = workTotal + recapTotal;
+            double overallOtherTotal = workTotal + recapTotal - lunchTotal;
 
             // Lunch cannot be >= 2 hours total
             if (lunchTotal >= 2.0)
@@ -278,11 +285,10 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    string cmdTextRecap = "INSERT INTO HardwareRecap (HardwareRecapWorkorderNumber, HardwareRecapDate, AddedBy, HardwareRecapDescription, HardwareRecapAssetNumber, HardwareRecapSerialNumber, StoreLocationID, HardwareRecapIP, HardwareRecapWAM, HardwareRecapHostname) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @RecapDescription, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID, @IP, @WAM, @Hostname);";
+                    string cmdTextRecap = "INSERT INTO HardwareRecap (HardwareRecapWorkorderNumber, HardwareRecapDate, HardwareRecapDescription, HardwareRecapAssetNumber, HardwareRecapSerialNumber, StoreLocationID, HardwareRecapIP, HardwareRecapWAM, HardwareRecapHostname) VALUES (@RecapWorkorderNumber, @RecapDate, @RecapDescription, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID, @IP, @WAM, @Hostname);";
                     SqlCommand cmdRecap = new SqlCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
                     cmdRecap.Parameters.AddWithValue("@RecapDate", DateTime.Today);
-                    cmdRecap.Parameters.AddWithValue("@AddedBy", userId);
                     cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
                     var pAsset = cmdRecap.Parameters.Add("@RecapAssetNumber", SqlDbType.Int);
                     pAsset.Value = NewRecap.RecapAssetNumber.HasValue ? NewRecap.RecapAssetNumber.Value : DBNull.Value;
@@ -305,7 +311,7 @@ namespace NewRecap.Pages.RecapAdder
                     foreach (var empId in SelectedEmployeeIds)
                     {
                         bool isTraining = trainingIdSet.Contains(empId);
-                        string cmdTextEmployeeRecap = "INSERT INTO EmployeeRecaps (HardwareRecapID, EmployeeID, IsTraining) VALUES (@HardwareRecapID, @EmployeeID, @IsTraining)";
+                        string cmdTextEmployeeRecap = "INSERT INTO EmployeeHardwareRecaps (HardwareRecapID, EmployeeID, IsTraining) VALUES (@HardwareRecapID, @EmployeeID, @IsTraining)";
                         SqlCommand cmdEmployeeRecap = new SqlCommand(cmdTextEmployeeRecap, conn);
                         cmdEmployeeRecap.Parameters.AddWithValue("@HardwareRecapID", HardwareRecapID);
                         cmdEmployeeRecap.Parameters.AddWithValue("@EmployeeID", empId);
@@ -321,7 +327,7 @@ namespace NewRecap.Pages.RecapAdder
                     foreach (var seg in Wsegments)
                     {
                         const string sql = @"
-                        INSERT INTO StartEndWork
+                        INSERT INTO StartEndWorkHardware
                         (HardwareRecapID,
                         StartWorkTime, EndWorkTime, StartWorkDate, EndWorkDate)
                         VALUES
@@ -340,31 +346,6 @@ namespace NewRecap.Pages.RecapAdder
                     }
 
                     // For each segment that has at least one valid start/end pair
-                    var Rsegments = NewRecap.RecapSegments.Where(s =>
-                        (s.RecapStartDate.HasValue && s.RecapEndDate.HasValue && s.RecapStart.HasValue && s.RecapEnd.HasValue));
-
-                    foreach (var seg in Rsegments)
-                    {
-                        const string sql = @"
-                            INSERT INTO StartEndRecap
-                            (HardwareRecapID,
-                            StartRecapTime, EndRecapTime, StartRecapDate, EndRecapDate)
-                            VALUES
-                            (@HardwareRecapID,
-                            @StartRecapTime, @EndRecapTime, @StartRecapDate, @EndRecapDate);";
-
-                        SqlCommand cmd = new SqlCommand(sql, conn);
-
-                        cmd.Parameters.AddWithValue("@HardwareRecapID", HardwareRecapID);
-
-                        cmd.Parameters.AddWithValue("@StartRecapTime", seg.RecapStart);
-                        cmd.Parameters.AddWithValue("@EndRecapTime", seg.RecapEnd);
-                        cmd.Parameters.AddWithValue("@StartRecapDate", seg.RecapStartDate);
-                        cmd.Parameters.AddWithValue("@EndRecapDate", seg.RecapEndDate);
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    // For each segment that has at least one valid start/end pair
                     var Lsegments = NewRecap.LunchSegments.Where(s =>
                         (s.LunchStartDate.HasValue && s.LunchEndDate.HasValue && s.LunchStart.HasValue && s.LunchEnd.HasValue));
 
@@ -372,7 +353,7 @@ namespace NewRecap.Pages.RecapAdder
                     {
 
                         const string sql = @"
-                            INSERT INTO StartEndLunch
+                            INSERT INTO StartEndLunchHardware
                             (HardwareRecapID,
                             StartLunchTime, EndLunchTime, StartLunchDate, EndLunchDate)
                             VALUES
@@ -387,6 +368,31 @@ namespace NewRecap.Pages.RecapAdder
                         cmd.Parameters.AddWithValue("@EndLunchTime", seg.LunchEnd);
                         cmd.Parameters.AddWithValue("@StartLunchDate", seg.LunchStartDate);
                         cmd.Parameters.AddWithValue("@EndLunchDate", seg.LunchEndDate);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // For each segment that has at least one valid start/end pair
+                    var Rsegments = NewRecap.RecapSegments.Where(s =>
+                        (s.RecapStartDate.HasValue && s.RecapEndDate.HasValue && s.RecapStart.HasValue && s.RecapEnd.HasValue));
+
+                    foreach (var seg in Rsegments)
+                    {
+                        const string sql = @"
+                            INSERT INTO StartEndRecapHardware
+                            (HardwareRecapID,
+                            StartRecapTime, EndRecapTime, StartRecapDate, EndRecapDate)
+                            VALUES
+                            (@HardwareRecapID,
+                            @StartRecapTime, @EndRecapTime, @StartRecapDate, @EndRecapDate);";
+
+                        SqlCommand cmd = new SqlCommand(sql, conn);
+
+                        cmd.Parameters.AddWithValue("@HardwareRecapID", HardwareRecapID);
+
+                        cmd.Parameters.AddWithValue("@StartRecapTime", seg.RecapStart);
+                        cmd.Parameters.AddWithValue("@EndRecapTime", seg.RecapEnd);
+                        cmd.Parameters.AddWithValue("@StartRecapDate", seg.RecapStartDate);
+                        cmd.Parameters.AddWithValue("@EndRecapDate", seg.RecapEndDate);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -542,7 +548,7 @@ namespace NewRecap.Pages.RecapAdder
         {
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                string query = "SELECT * FROM StoreLocations ORDER BY StoreNumber ";
+                string query = "SELECT * FROM StoreLocations WHERE IsActive = 1 ORDER BY StoreNumber ";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
@@ -570,7 +576,7 @@ namespace NewRecap.Pages.RecapAdder
             {
                 string cmdText = @"
                     SELECT TotalWorkTime
-                    FROM StartEndWork
+                    FROM StartEndWorkHardware
                     WHERE HardwareRecapID = @HardwareRecapID;";
 
                 using (SqlCommand cmd = new SqlCommand(cmdText, conn))
@@ -602,7 +608,7 @@ namespace NewRecap.Pages.RecapAdder
             {
                 string cmdText = @"
                     SELECT TotalLunchTime
-                    FROM StartEndLunch
+                    FROM StartEndLunchHardware
                     WHERE HardwareRecapID = @HardwareRecapID;";
 
                 using (SqlCommand cmd = new SqlCommand(cmdText, conn))
@@ -634,7 +640,7 @@ namespace NewRecap.Pages.RecapAdder
             {
                 string cmdText = @"
                     SELECT TotalRecapTime
-                    FROM StartEndRecap
+                    FROM StartEndRecapHardware
                     WHERE HardwareRecapID = @HardwareRecapID;";
 
                 using (SqlCommand cmd = new SqlCommand(cmdText, conn))
@@ -666,7 +672,7 @@ namespace NewRecap.Pages.RecapAdder
             {
                 string sql = @"
             SELECT e.EmployeeFName, e.EmployeeLName, er.IsTraining
-            FROM EmployeeRecaps er
+            FROM EmployeeHardwareRecaps er
             INNER JOIN Employee e ON e.EmployeeID = er.EmployeeID
             WHERE er.HardwareRecapID = @HardwareRecapID AND er.EmployeeID = @EmpID;";
 
@@ -727,7 +733,7 @@ namespace NewRecap.Pages.RecapAdder
                SU.SystemUserRole
                FROM Employee AS E
                LEFT JOIN SystemUser AS SU
-               ON E.EmployeeID = SU.EmployeeID;
+               ON E.EmployeeID = SU.EmployeeID WHERE su.IsActive = 1;
                ";
 
             using var cmd = new SqlCommand(sql, conn);
@@ -794,7 +800,7 @@ namespace NewRecap.Pages.RecapAdder
             {
                 string sql = @"
             SELECT ER.EmployeeID, ER.IsTraining
-            FROM EmployeeRecaps ER
+            FROM EmployeeHardwareRecaps ER
             WHERE ER.HardwareRecapID = @HardwareRecapID;";
 
                 using (var cmd = new SqlCommand(sql, conn))
@@ -881,6 +887,21 @@ namespace NewRecap.Pages.RecapAdder
         {
             return IsAnyFilled(sd, st, ed, et) && !IsComplete(sd, st, ed, et);
         }// End of 'IsIncomplete'.
+
+        private bool IsUserActive(int userID)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = "SELECT IsActive FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userID);
+
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                return result != null && (bool)result;
+            }
+        }// End of 'IsUserActive'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

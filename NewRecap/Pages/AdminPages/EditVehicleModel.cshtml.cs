@@ -17,19 +17,22 @@ namespace NewRecap.Pages.AdminPages
 
         public IActionResult OnGet(int id)
         {
+
             if (!User.IsInRole("Admin"))
             {
                 return Forbid();
             }
-            /*--------------------ADMIN PRIV----------------------*/
+
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            /*--------------------ADMIN PRIV----------------------*/
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
             /*--------------------ADMIN PRIV----------------------*/
+
             PopulateVehicleList(id);
             return Page();
         }// End of 'OnGet'.
@@ -121,5 +124,5 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
-}
+    }// End of 'EditVehicleModel' Class.
+}// End of 'namespace'.

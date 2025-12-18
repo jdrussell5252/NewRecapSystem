@@ -16,21 +16,28 @@ namespace NewRecap.Pages.CheckoutToolKit
         public int SelectedToolKitId { get; set; }
         public bool IsAdmin { get; set; }
         public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
-        public void OnGet()
+        public IActionResult OnGet()
         {
             int? employeeId = null;
-            /*--------------------ADMIN PRIV----------------------*/
+
+
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            /*--------------------ADMIN PRIV----------------------*/
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                if (!IsUserActive(userId))
+                {
+                    return Forbid();
+                }
                 CheckIfUserIsAdmin(userId);
-
                 employeeId = GetEmployeeIdForUser(userId);
             }
             /*--------------------ADMIN PRIV----------------------*/
+
             PopulateToolKitOptions(employeeId);
+            return Page();
         }// End of 'OnGet'.
 
         public IActionResult OnPost()
@@ -134,10 +141,11 @@ namespace NewRecap.Pages.CheckoutToolKit
                 {
                     // Regular users only see toolkits checked out to them
                     sql = @"
-                SELECT ToolKitID, ToolKitName
-                FROM ToolKit
+                SELECT tk.ToolKitID, tk.ToolKitName
+                FROM ToolKit AS tk
+                INNER JOIN EmployeeToolKits AS etk ON tk.ToolKitID = etk.ToolKitID
                 WHERE IsActive = 1 AND EmployeeID = @EmployeeID
-                ORDER BY ToolKitName;";
+                ORDER BY tk.ToolKitName;";
                 }
 
                 using (var cmd = new SqlCommand(sql, conn))
@@ -164,6 +172,22 @@ namespace NewRecap.Pages.CheckoutToolKit
                 }
             }
         }// End of 'PopulateToolKitOptions'.
+
+        private bool IsUserActive(int userID)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = "SELECT IsActive FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userID);
+
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                return result != null && (bool)result;
+            }
+        }// End of 'IsUserActive'.
+
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

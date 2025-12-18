@@ -20,8 +20,13 @@ namespace NewRecap.Pages.Account
 
 
         public bool IsAdmin { get; set; }
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            if (!User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
             /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -30,6 +35,7 @@ namespace NewRecap.Pages.Account
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
+            return Page();
         }// End of 'OnGet'.
 
         public IActionResult OnPost()
@@ -90,7 +96,7 @@ namespace NewRecap.Pages.Account
                         employeeId = Convert.ToInt32(idCmd.ExecuteScalar());
                     }
 
-                    string cmdSystemUserText = "INSERT INTO SystemUser (EmployeeID, SystemUsername, SystemUserPassword, SystemUserRole, SystemUserEmail, MustChangePassword) VALUES (@EmployeeID, @SystemUsername, @SystemUserPassword, @SystemUserRole, @SystemUserEmail, @MustChangePassword);";
+                    string cmdSystemUserText = "INSERT INTO SystemUser (EmployeeID, SystemUsername, SystemUserPassword, SystemUserRole, SystemUserEmail, MustChangePassword, IsActive) VALUES (@EmployeeID, @SystemUsername, @SystemUserPassword, @SystemUserRole, @SystemUserEmail, @MustChangePassword, @IsActive);";
                     SqlCommand cmdS = new SqlCommand(cmdSystemUserText, conn);
                     cmdS.Parameters.AddWithValue("@EmployeeID", employeeId);
                     cmdS.Parameters.AddWithValue("@SystemUsername", NewUser.UserName);
@@ -98,6 +104,7 @@ namespace NewRecap.Pages.Account
                     cmdS.Parameters.AddWithValue("@SystemUserRole", false);
                     cmdS.Parameters.AddWithValue("@SystemUserEmail", NewUser.Email);
                     cmdS.Parameters.AddWithValue("@MustChangePassword", true);
+                    cmdS.Parameters.AddWithValue("@IsActive", true);
                     cmdS.ExecuteNonQuery();
                     
                 }

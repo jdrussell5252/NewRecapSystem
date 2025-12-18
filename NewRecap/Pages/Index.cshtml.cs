@@ -18,7 +18,7 @@ namespace NewRecap.Pages
         public IndexModel(ILogger<IndexModel> logger)
         {
             _logger = logger;
-        }
+        }// End of 'IndexModel'.
 
         public IActionResult OnGet()
         {
@@ -26,19 +26,20 @@ namespace NewRecap.Pages
             if (redirect != null)
                 return redirect;
 
+            // Safely access the NameIdentifier claim
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             /*--------------------ADMIN PRIV----------------------*/
-            // Check if the user is authenticated first
-            if (User.Identity.IsAuthenticated)
+            if (userIdClaim != null)
             {
-                // Safely access the NameIdentifier claim
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim != null)
+                int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                if (!IsUserActive(userId))
                 {
-                    int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
-                    CheckIfUserIsAdmin(userId);
+                    return Forbid();
                 }
+                CheckIfUserIsAdmin(userId);
             }
             /*--------------------ADMIN PRIV----------------------*/
+
             return Page();
         }//End of 'OnGet'.
 
@@ -83,6 +84,21 @@ namespace NewRecap.Pages
             return null;
         }// End of 'EnforcePasswordChange'.
 
+        private bool IsUserActive(int userID)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = "SELECT IsActive FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userID);
+
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                return result != null && (bool)result;
+            }
+        }// End of 'IsUserActive'.
+
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
@@ -108,5 +124,5 @@ namespace NewRecap.Pages
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
+    }// End of 'Index' Class.
 }// End of 'namespace'.

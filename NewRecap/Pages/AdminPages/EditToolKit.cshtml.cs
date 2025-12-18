@@ -17,19 +17,22 @@ namespace NewRecap.Pages.AdminPages
 
         public IActionResult OnGet(int id)
         {
+
             if (!User.IsInRole("Admin"))
             {
                 return Forbid();
             }
-            /*--------------------ADMIN PRIV----------------------*/
+
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            /*--------------------ADMIN PRIV----------------------*/
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
             /*--------------------ADMIN PRIV----------------------*/
+
             PopulateToolKitList(id);
             return Page();
         }// End of 'Onget'.
@@ -39,7 +42,7 @@ namespace NewRecap.Pages.AdminPages
             var kitName = (ToolKits.ToolKitName ?? string.Empty).Trim();
             var barcodeValue = (ToolKits.BarcodeValue ?? string.Empty).Trim();
             const int dbMaxName = 50;
-            const int dbMaxBarcode = 15;
+            const int dbMaxBarcode = 50;
 
 
             if (kitName.Length > dbMaxName)

@@ -13,11 +13,11 @@ namespace NewRecap.Pages.AdminPages
     {
         public List<VehicleView> Vehicles { get; set; } = new List<VehicleView>();
         public bool IsAdmin { get; set; }
-
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 5;
         public int TotalCount { get; set; }
         public int TotalPages => Math.Max(1, (int)Math.Ceiling((double)TotalCount / Math.Max(1, PageSize)));
+
         public IActionResult OnGet(int pageNumber = 1, int pageSize = 5)
         {
             if (!User.IsInRole("Admin"))
@@ -59,14 +59,12 @@ namespace NewRecap.Pages.AdminPages
             return Page();
         }// End of 'OnGet'.
 
-        public IActionResult OnPostDelete(int id)
+        /*public IActionResult OnPostDelete(int id)
         {
             // delete the book from the database
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
                 conn.Open();
-
-
                 string deleteCmdText = "DELETE FROM Vehicle WHERE VehicleID = @VehicleID";
                 SqlCommand deleteCmd = new SqlCommand(deleteCmdText, conn);
                 deleteCmd.Parameters.AddWithValue("@VehicleID", id);
@@ -75,7 +73,7 @@ namespace NewRecap.Pages.AdminPages
             }
 
             return RedirectToPage();
-        }//End of 'OnPostDelete'.
+        }//End of 'OnPostDelete'.*/
 
         private void PopulateVehicleList()
         {
@@ -93,7 +91,8 @@ namespace NewRecap.Pages.AdminPages
                         {
                             VehicleID = reader.GetInt32(0),
                             VehicleNumber = reader.GetString(1),
-                            VehicleModel = reader.IsDBNull(2) ? string.Empty : reader.GetString(2)
+                            VehicleModel = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                            IsActive = reader.GetBoolean(3)
                         };
                         Vehicles.Add(AVehicle);
 
@@ -126,5 +125,5 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
-}
+    }// End of 'BrowseVehicles' Class.
+}// End of 'namespace'.

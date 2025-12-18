@@ -30,7 +30,7 @@ namespace NewRecap.Pages.AdminPages
             }
             PopulateEmployeeList(id);
             return Page();
-        }
+        }// End of 'OnGet'.
 
         public IActionResult OnPost(int id)
         {
@@ -97,5 +97,5 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
-}
+    }// End of 'EditEmployeeRole' Class.
+}// End of 'namespace'.

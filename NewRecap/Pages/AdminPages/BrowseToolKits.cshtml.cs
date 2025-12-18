@@ -29,23 +29,28 @@ namespace NewRecap.Pages.AdminPages
         public string? FilterToolkitBarcode { get; set; }
         public IActionResult OnGet(int pageNumber = 1, int pageSize = 5)
         {
+            int? currentEmployeeId = null;
+
             var redirect = EnforcePasswordChange();
             if (redirect != null)
                 return redirect;
 
-            int? currentEmployeeId = null;
-            /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            /*--------------------ADMIN PRIV----------------------*/
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                if (!IsUserActive(userId))
+                {
+                    return Forbid();
+                }
                 CheckIfUserIsAdmin(userId);
                 currentEmployeeId = GetEmployeeIdForUser(userId);
-                CurrentEmployeeId = currentEmployeeId;
             }
             /*--------------------End of ADMIN PRIV----------------------*/
 
+            CurrentEmployeeId = currentEmployeeId;
             PopulateToolkitList(currentEmployeeId);
 
             // === Pagination logic ===
@@ -101,9 +106,17 @@ namespace NewRecap.Pages.AdminPages
             {
                 conn.Open();
 
+                // delete the employee toolkit.
+                string deleteTkSql = "DELETE FROM EmployeeToolKits WHERE EmployeeToolKitID = @EmployeeToolKitID";
+                using (var cmd = new SqlCommand(deleteTkSql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@EmployeeToolKitID", id);
+                    cmd.ExecuteNonQuery();
+                }
+
                 // delete the toolkit.
-                string deleteTkSql = "DELETE FROM ToolKit WHERE ToolKitID = @ToolKitID";
-                using (var cmd2 = new SqlCommand(deleteTkSql, conn))
+                string deleteTkSql1 = "DELETE FROM ToolKit WHERE ToolKitID = @ToolKitID";
+                using (var cmd2 = new SqlCommand(deleteTkSql1, conn))
                 {
                     cmd2.Parameters.AddWithValue("@ToolKitID", id);
                     cmd2.ExecuteNonQuery();
@@ -182,50 +195,77 @@ namespace NewRecap.Pages.AdminPages
                         }
                     }
                 }
-                /*else
+                else
                 {
-                    query = @"
-                SELECT 
-                    tk.ToolKitID,
-                    tk.ToolKitName,
-                    tk.ToolKitBarcode,
-                    tk.IsActive,
-                    tk.EmployeeID,
-                    e.EmployeeFName,
-                    e.EmployeeLName
-                FROM ToolKit AS tk
-                    LEFT JOIN Employee AS e
-                    ON tk.EmployeeID = e.EmployeeID
-                WHERE tk.EmployeeID = @EmployeeID
-                ORDER BY tk.ToolKitName;";
-                }*/
-            }
+                    int? employeeId = GetEmployeeIdForUser(currentEmployeeId);
+                    string query = @"
+                        SELECT 
+                            tk.ToolKitID,
+                            tk.ToolKitName,
+                            tk.ToolKitBarcode,
+                            tk.IsActive,
+                            etk.EmployeeID,
+                            e.EmployeeFName,
+                            e.EmployeeLName
+                        FROM ToolKit AS tk
+                        LEFT JOIN EmployeeToolKits AS etk ON tk.ToolKitID = etk.ToolKitID
+                        LEFT JOIN Employee AS e ON etk.EmployeeID = e.EmployeeID
+                        WHERE etk.EmployeeID = @EmployeeID
+                        ORDER BY ToolKitName;";
 
-            /*using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
-            {
-                string query = "SELECT ToolKitID, ToolKitName, ToolKitBarcode, IsActive FROM ToolKit WHERE ToolKitID = @ToolKitID";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@ToolKidID", id);
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@EmployeeID", currentEmployeeId);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        Toolkit = new ToolKitView
+                        if (reader.HasRows)
                         {
-                            ToolKitID = reader.GetInt32(0),
-                            ToolKitName = reader.GetString(1)
-                        };
+                            while (reader.Read())
+                            {
+                                int toolKitId = reader.GetInt32(0);
+                                string name = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                                string barcode = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                                bool isActive = !reader.IsDBNull(3) && reader.GetBoolean(3);
+                                //int toolkitEmployeeId = reader.GetInt32(4);
+
+                                string employeeName = null;
+                                if (!reader.IsDBNull(5) || !reader.IsDBNull(6))
+                                {
+                                    string f = reader.IsDBNull(5) ? "" : reader.GetString(5);
+                                    string l = reader.IsDBNull(6) ? "" : reader.GetString(6);
+                                    if (!string.IsNullOrWhiteSpace(f) || !string.IsNullOrWhiteSpace(l))
+                                        employeeName = $"{f} {l}".Trim();
+                                }
+
+                                ToolKitView AToolkit = new ToolKitView
+                                {
+                                    ToolKitID = toolKitId,
+                                    ToolKitName = name,
+                                    BarcodeValue = barcode,
+                                    IsActive = isActive,
+                                    //EmployeeID = toolkitEmployeeId,
+                                    CurrentEmployeeName = employeeName,
+
+                                    // Only the person who has it (or an admin) can return it
+                                    /*CanReturn = isActive
+                                        && (
+                                                (currentEmployeeId.HasValue && toolkitEmployeeId == currentEmployeeId)
+                                                || IsAdmin
+                                            )*/
+                                    CanReturn = isActive
+                                };
+
+                                Toolkit.Add(AToolkit);
+                            }
+                        }
                     }
                 }
-            }*/
+            }
 
         }//End of 'PopulateToolkitList'.
 
 
 
-        private int? GetEmployeeIdForUser(int systemUserId)
+        private int? GetEmployeeIdForUser(int? systemUserId)
         {
             using (var conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
@@ -286,6 +326,22 @@ namespace NewRecap.Pages.AdminPages
             // OK to continue
             return null;
         }// End of 'EnforcePasswordChange'.
+
+        private bool IsUserActive(int userID)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = "SELECT IsActive FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userID);
+
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                return result != null && (bool)result;
+            }
+        }// End of 'IsUserActive'.
+
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

@@ -22,10 +22,7 @@ namespace NewRecap.Pages.RecapAdder
         public List<int> SelectedEmployeeIds { get; set; } = new();
         public List<SelectListItem> EmployeeOptions { get; set; } = new();
 
-        private const int ROLE_ADMIN = 2;
-
-
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
+        //private const int ROLE_ADMIN = 2;
         public Cat6CableSegments CableCat6 { get; set; }
         public _182CableSegments Cable182 { get; set; } = new _182CableSegments();
         public _184CableSegments Cable184 { get; set; } = new _184CableSegments();
@@ -34,20 +31,26 @@ namespace NewRecap.Pages.RecapAdder
         public CoaxCableSegments CableCoax { get; set; } = new CoaxCableSegments();
         public string? TrainingEmployeeIds { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
-            /*--------------------ADMIN PRIV----------------------*/
+
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            /*--------------------ADMIN PRIV----------------------*/
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                if (!IsUserActive(userId))
+                {
+                    return Forbid();
+                }
                 CheckIfUserIsAdmin(userId);
             }
-            //PopulateEmployeeList();
+            /*--------------------ADMIN PRIV----------------------*/
+
             PopulateVehicleList();
             PopulateEmployeeOptions();
-            /*--------------------ADMIN PRIV----------------------*/
+            return Page();
         }// End of 'OnGet'.
 
         public IActionResult OnPost()
@@ -215,7 +218,7 @@ namespace NewRecap.Pages.RecapAdder
             double recapTotal = recapSegs.Sum(s =>
                 Hours(s.RecapStartDate, s.RecapStart, s.RecapEndDate, s.RecapEnd));
 
-            double overallOtherTotal = workTotal + driveTotal + supportTotal + recapTotal;
+            double overallOtherTotal = workTotal + driveTotal + supportTotal + recapTotal - lunchTotal;
 
             // Lunch cannot be >= 2 hours total
             if (lunchTotal >= 2.0)
@@ -401,11 +404,10 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, AddedBy, VehicleID, RecapDescription, RecapState, RecapCity, StartingMileage, EndingMileage, Customer) VALUES (@RecapWorkorderNumber, @RecapDate, @AddedBy, @VehicleID, @RecapDescription, @RecapState, @RecapCity, @StartingMileage, @EndingMileage, @Customer);";
+                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, VehicleID, RecapDescription, RecapState, RecapCity, StartingMileage, EndingMileage, Customer) VALUES (@RecapWorkorderNumber, @RecapDate, @VehicleID, @RecapDescription, @RecapState, @RecapCity, @StartingMileage, @EndingMileage, @Customer);";
                     SqlCommand cmdRecap = new SqlCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
                     cmdRecap.Parameters.AddWithValue("@RecapDate", DateTime.Today);
-                    cmdRecap.Parameters.AddWithValue("@AddedBy", userId);
 
                     var pv = cmdRecap.Parameters.Add("@VehicleID", SqlDbType.Int);
                     pv.Value = SelectedVehicleID.HasValue ? SelectedVehicleID.Value : DBNull.Value;
@@ -714,7 +716,7 @@ namespace NewRecap.Pages.RecapAdder
         {
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                string query = "SELECT * FROM Vehicle ORDER BY VehicleNumber";
+                string query = "SELECT * FROM Vehicle WHERE IsActive = 1 ORDER BY VehicleNumber";
                 using (SqlCommand command = new SqlCommand(query, conn))
                 {
                     conn.Open();
@@ -747,7 +749,7 @@ namespace NewRecap.Pages.RecapAdder
                SU.SystemUserRole
                FROM Employee AS E
                LEFT JOIN SystemUser AS SU
-               ON E.EmployeeID = SU.EmployeeID;";
+               ON E.EmployeeID = SU.EmployeeID WHERE su.IsActive = 1;";
 
             using var cmd = new SqlCommand(sql, conn);
             conn.Open();
@@ -866,6 +868,21 @@ namespace NewRecap.Pages.RecapAdder
                 ModelState.AddModelError(keyEnd, msg);
             }
         }// End of 'ValidateCablePair'.
+
+        private bool IsUserActive(int userID)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = "SELECT IsActive FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userID);
+
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                return result != null && (bool)result;
+            }
+        }// End of 'IsUserActive'.
 
 
         /*--------------------ADMIN PRIV----------------------*/

@@ -35,15 +35,28 @@ namespace NewRecap.Pages.AdminPages
 
         public IActionResult OnPost()
         {
+            var toolkitName = (ToolKit.ToolKitName ?? string.Empty).Trim();
+            var toolkitBarcode = (ToolKit.BarcodeValue ?? string.Empty).Trim();
+            const int dbMax = 50;
+
+            if (toolkitName.Length > dbMax)
+            {
+                ModelState.AddModelError("ToolKit.ToolKitName", "Toolkit name must be at most 50 characters.");
+            }
+
+            if (toolkitBarcode.Length > dbMax)
+            {
+                ModelState.AddModelError("ToolKit.ToolKitName", "Toolkit name must be at most 50 characters.");
+            }
+
             if (ModelState.IsValid)
             {
                 using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
                 {
                     conn.Open();
 
-                    string insertcmdText = "INSERT INTO ToolKit (EmployeeID, ToolKitName, ToolKitBarcode, IsActive, IsReturned) VALUES (@EmployeeID, @ToolKitName, @ToolKitBarcode, @IsActive, @IsReturned);";
+                    string insertcmdText = "INSERT INTO ToolKit (ToolKitName, ToolKitBarcode, IsActive, IsReturned) VALUES (@ToolKitName, @ToolKitBarcode, @IsActive, @IsReturned);";
                     SqlCommand insertcmd = new SqlCommand(insertcmdText, conn);
-                    insertcmd.Parameters.AddWithValue("@EmployeeID", DBNull.Value);
                     insertcmd.Parameters.AddWithValue("@ToolKitName", ToolKit.ToolKitName);
                     insertcmd.Parameters.AddWithValue("@ToolKitBarcode", ToolKit.BarcodeValue);
                     insertcmd.Parameters.AddWithValue("@IsActive", false);

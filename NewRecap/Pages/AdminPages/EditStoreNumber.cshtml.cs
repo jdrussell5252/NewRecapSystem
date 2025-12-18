@@ -32,7 +32,7 @@ namespace NewRecap.Pages.AdminPages
             /*--------------------ADMIN PRIV----------------------*/
             PopulateLocationList(id);
             return Page();
-        }
+        }// End of 'OnGet'.
 
         public IActionResult OnPost(int id)
         {
@@ -41,7 +41,7 @@ namespace NewRecap.Pages.AdminPages
 
             if (storeNumber < 0)
             {
-                ModelState.AddModelError("Locations.StoreNumber", "Store Number must be greater than 0."); ;
+                ModelState.AddModelError("Locations.StoreNumber", "Store Number must be greater than or equal to 0."); ;
             }
 
             if (storeNumber == null)
@@ -116,5 +116,5 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
-}
+    }// End of 'EditStoreNumber' Class.
+}// End of 'namespace'.

@@ -17,19 +17,21 @@ namespace NewRecap.Pages.AdminPages
 
         public IActionResult OnGet(int id)
         {
-            if (!User.IsInRole("Admin"))
-            {
-                return Forbid();
-            }
             /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
             if (userIdClaim != null)
             {
-                int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
                 CheckIfUserIsAdmin(userId);
             }
             /*--------------------ADMIN PRIV----------------------*/
+
+            if (!IsUserActive(userId))
+            {
+                return Forbid();
+            }
+
             PopulateStoreCity(id);
             return Page();
         }// End of 'OnGet'.
@@ -94,6 +96,21 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'PopulateLocationList'.
 
+        private bool IsUserActive(int userID)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = "SELECT IsActive FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userID);
+
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                return result != null && (bool)result;
+            }
+        }// End of 'IsUserActive'.
+
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)
         {
@@ -118,5 +135,5 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
-}
+    }// End of 'EditStoreCity' Class.
+}// End of 'namespace'.

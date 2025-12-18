@@ -55,19 +55,25 @@ namespace NewRecap.Pages.AdminPages
             if (redirect != null)
                 return redirect;
 
-            PopulateStoreOptions();
-            PopulateEmployeeOptions();
-            /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            /*--------------------ADMIN PRIV----------------------*/
             if (userIdClaim != null)
             {
                 int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+                if (!IsUserActive(userId))
+                {
+                    return Forbid();
+                }
                 CheckIfUserIsAdmin(userId);
                 PopulateRecapList(userId);
                 PopulateHardwareRecapList(userId);
             }
             /*--------------------ADMIN PRIV----------------------*/
+
+            PopulateStoreOptions();
+            PopulateEmployeeOptions();
+
 
             // --- Filter by store (if selected) ---
             if (FilterStoreNumber.HasValue)
@@ -195,7 +201,7 @@ namespace NewRecap.Pages.AdminPages
                         {
                             int recapId = reader.GetInt32(0);
                             var cableTotals = GetCableTotals(recapId);
-                            int effCount = GetEffectiveEmployeeCount(recapId);
+                            int effCount = GetEffectiveEmployeeCountHardwareRecap(recapId);
 
                             decimal baseWork = GetHardwareWorkTimeBase(recapId);
                             decimal totalWork = baseWork * effCount;
@@ -256,7 +262,7 @@ namespace NewRecap.Pages.AdminPages
                       hr.HardwareRecapIP,
                       hr.HardwareRecapWAM,
                       hr.HardwareRecapHostname
-                    FROM HardwareRecap as hr INNER JOIN EmployeeRecaps AS er ON hr.HardwareRecapID = er.HardwareRecapID WHERE er.EmployeeID = @EmployeeID
+                    FROM HardwareRecap as hr INNER JOIN EmployeeHardwareRecaps AS er ON hr.HardwareRecapID = er.HardwareRecapID WHERE er.EmployeeID = @EmployeeID
                     ORDER BY hr.HardwareRecapDate DESC;";
 
                     SqlCommand cmd = new SqlCommand(cmdText, conn);
@@ -269,7 +275,7 @@ namespace NewRecap.Pages.AdminPages
                         {
                             int recapId = reader.GetInt32(0);
                             var cableTotals = GetCableTotals(recapId);
-                            int effCount = GetEffectiveEmployeeCount(recapId);
+                            int effCount = GetEffectiveEmployeeCountHardwareRecap(recapId);
 
                             decimal baseWork = GetWorkTimeBase(recapId);
                             decimal totalWork = baseWork * effCount;
@@ -277,16 +283,10 @@ namespace NewRecap.Pages.AdminPages
                             decimal baseLunch = GetLunchTimeBase(recapId);
                             decimal totalLunch = baseLunch * effCount;
 
-                            decimal baseTravel = GetTravelTimeBase(recapId);
-                            decimal totalTravel = baseTravel * effCount;
-
-                            decimal baseSupport = GetSupportTimeBase(recapId);
-                            decimal totalSupport = baseSupport;
-
                             decimal baseRecap = GetRecapTimeBase(recapId);
                             decimal totalRecap = baseRecap;
 
-                            decimal totalTime = totalWork + totalTravel + totalSupport + totalRecap - totalLunch;
+                            decimal totalTime = totalWork + totalRecap - totalLunch;
 
                             RecapView recap = new RecapView
                             {
@@ -349,7 +349,7 @@ namespace NewRecap.Pages.AdminPages
                         {
                             int recapId = reader.GetInt32(0);
                             var cableTotals = GetCableTotals(recapId);
-                            int effCount = GetEffectiveEmployeeCount(recapId);
+                            int effCount = GetEffectiveEmployeeCountRecap(recapId);
 
                             decimal baseWork = GetWorkTimeBase(recapId);
                             decimal totalWork = baseWork * effCount;
@@ -433,7 +433,7 @@ namespace NewRecap.Pages.AdminPages
                         {
                             int recapId = reader.GetInt32(0);
                             var cableTotals = GetCableTotals(recapId);
-                            int effCount = GetEffectiveEmployeeCount(recapId);
+                            int effCount = GetEffectiveEmployeeCountRecap(recapId);
 
                             decimal baseWork = GetWorkTimeBase(recapId);
                             decimal totalWork = baseWork * effCount;
@@ -496,8 +496,6 @@ namespace NewRecap.Pages.AdminPages
             }
         }// End of 'PopulateRecapList'.
 
-
-
         private List<string> PopulateRecapEmployees(int recapID)
         {
             var employees = new List<string>();
@@ -548,7 +546,7 @@ namespace NewRecap.Pages.AdminPages
                    e.EmployeeLName,
                    er.IsTraining
                    FROM (Employee AS e
-                   INNER JOIN EmployeeRecaps AS er
+                   INNER JOIN EmployeeHardwareRecaps AS er
                    ON e.EmployeeID = er.EmployeeID)
                    WHERE er.HardwareRecapID = @HardwareRecapID";
 
@@ -805,7 +803,7 @@ namespace NewRecap.Pages.AdminPages
             // ---------- Work segments (StartEndTime) ----------
             using (var cmd = new SqlCommand(@"
                 SELECT StartWorkDate, StartWorkTime, EndWorkDate, EndWorkTime
-                FROM StartEndWork
+                FROM StartEndWorkHardware
                 WHERE HardwareRecapID = @HardwareRecapID
                 ORDER BY StartWorkDate, StartWorkTime;", conn))
             {
@@ -820,7 +818,7 @@ namespace NewRecap.Pages.AdminPages
             // ---------- Lunch segments (StartEndLunch) ----------
             using (var cmd = new SqlCommand(@"
                 SELECT StartLunchDate, StartLunchTime, EndLunchDate, EndLunchTime
-                FROM StartEndLunch
+                FROM StartEndLunchHardware
                 WHERE HardwareRecapID = @HardwareRecapID
                 ORDER BY StartLunchDate, StartLunchTime;", conn))
             {
@@ -835,7 +833,7 @@ namespace NewRecap.Pages.AdminPages
             // ---------- Recap segments (StartEndRecap) ----------
             using (var cmd = new SqlCommand(@"
                 SELECT StartRecapDate, StartRecapTime, EndRecapDate, EndRecapTime
-                FROM StartEndRecap
+                FROM StartEndRecapHardware
                 WHERE HardwareRecapID = @HardwareRecapID
                 ORDER BY StartRecapDate, StartRecapTime;", conn))
             {
@@ -944,7 +942,7 @@ namespace NewRecap.Pages.AdminPages
             StoreJson = System.Text.Json.JsonSerializer.Serialize(storeNumbers);
         }// End of 'PopulateStoreOptions'.
 
-        private int GetEffectiveEmployeeCount(int recapID)
+        private int GetEffectiveEmployeeCountRecap(int recapID)
         {
             var allEmployees = new HashSet<int>();
             var trainingEmployees = new HashSet<int>();
@@ -996,7 +994,61 @@ namespace NewRecap.Pages.AdminPages
                 billableCount = 1;
 
             return billableCount;
-        }
+        }// End of 'GetEffectiveEmployeeCountRecap'.
+
+        private int GetEffectiveEmployeeCountHardwareRecap(int recapID)
+        {
+            var allEmployees = new HashSet<int>();
+            var trainingEmployees = new HashSet<int>();
+
+            using var conn = new SqlConnection(AppHelper.GetDBConnectionString());
+            conn.Open();
+
+            string sql = @"
+        SELECT  
+            ER.EmployeeID,
+            ER.IsTraining
+        FROM EmployeeHardwareRecaps ER
+        WHERE ER.HardwareRecapID = @HardwareRecapID;";
+
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@HardwareRecapID", recapID);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (reader["EmployeeID"] == DBNull.Value)
+                    continue;
+
+                int empId = Convert.ToInt32(reader["EmployeeID"]);
+                allEmployees.Add(empId);
+
+                bool isTraining =
+                    reader["IsTraining"] != DBNull.Value &&
+                    Convert.ToBoolean(reader["IsTraining"]);
+
+                if (isTraining)
+                {
+                    trainingEmployees.Add(empId);
+                }
+            }
+
+            int totalEmployees = allEmployees.Count;
+            int trainingCount = trainingEmployees.Count;
+
+            // Billable = everyone except training
+            int billableCount = totalEmployees - trainingCount;
+
+            // If we only had trainees, still treat recap as 1x
+            if (billableCount <= 0 && trainingCount > 0)
+                billableCount = 1;
+
+            // Absolute minimum 1
+            if (billableCount <= 0)
+                billableCount = 1;
+
+            return billableCount;
+        }// End of 'GetEffectiveEmployeeCountHardwareRecap'.
 
 
         private void PopulateEmployeeOptions()
@@ -1066,7 +1118,7 @@ namespace NewRecap.Pages.AdminPages
             using var conn = new SqlConnection(AppHelper.GetDBConnectionString());
             string sql = @"
                 SELECT EmployeeID
-                FROM EmployeeRecaps
+                FROM EmployeeHardwareRecaps
                 WHERE HardwareRecapID = @HardwareRecapID;";
 
             using var cmd = new SqlCommand(sql, conn);
@@ -1330,7 +1382,7 @@ namespace NewRecap.Pages.AdminPages
             {
                 string cmdText = @"
                     SELECT TotalWorkTime
-                    FROM StartEndWork
+                    FROM StartEndWorkHardware
                     WHERE HardwareRecapID = @HardwareRecapID;";
 
                 using (SqlCommand cmd = new SqlCommand(cmdText, conn))
@@ -1352,7 +1404,7 @@ namespace NewRecap.Pages.AdminPages
             }
 
             return baseWorkTotal;
-        }// End of 'GetWorkTimeBase'.
+        }// End of 'GetHardwareWorkTimeBase'.
 
         private decimal GetLunchTimeBase(int recapId)
         {
@@ -1394,7 +1446,7 @@ namespace NewRecap.Pages.AdminPages
             {
                 string cmdText = @"
                     SELECT TotalLunchTime
-                    FROM StartEndLunch
+                    FROM StartEndLunchHardware
                     WHERE HardwareRecapID = @HardwareRecapID;";
 
                 using (SqlCommand cmd = new SqlCommand(cmdText, conn))
@@ -1416,7 +1468,7 @@ namespace NewRecap.Pages.AdminPages
             }
 
             return baseLunchTotal;
-        }// End of 'GetLunchTimeBase'.
+        }// End of 'GetHardwareLunchTimeBase'.
 
         private decimal GetTravelTimeBase(int recapId)
         {
@@ -1522,7 +1574,7 @@ namespace NewRecap.Pages.AdminPages
             {
                 string cmdText = @"
                     SELECT TotalRecapTime
-                    FROM StartEndRecap
+                    FROM StartEndRecapHardware
                     WHERE HardwareRecapID = @HardwareRecapID;";
 
                 using (SqlCommand cmd = new SqlCommand(cmdText, conn))
@@ -1544,7 +1596,7 @@ namespace NewRecap.Pages.AdminPages
             }
 
             return baseRecapTotal;
-        }// End of 'GetRecapTimeBase'.
+        }// End of 'GetHardwareRecapTimeBase'.
 
         private IActionResult EnforcePasswordChange()
         {
@@ -1587,6 +1639,20 @@ namespace NewRecap.Pages.AdminPages
             return null;
         }// End of 'EnforcePasswordChange'.
 
+        private bool IsUserActive(int userID)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = "SELECT IsActive FROM SystemUser WHERE SystemUserID = @SystemUserID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@SystemUserID", userID);
+
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+
+                return result != null && (bool)result;
+            }
+        }// End of 'IsUserActive'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

@@ -65,7 +65,7 @@ namespace NewRecap.Pages.AdminPages
         {
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                string query = "SELECT StoreLocationID, StoreNumber, StoreCity, StoreState FROM StoreLocations ORDER BY StoreNumber";
+                string query = "SELECT StoreLocationID, StoreNumber, StoreCity, StoreState, IsActive FROM StoreLocations ORDER BY StoreNumber";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
@@ -78,7 +78,8 @@ namespace NewRecap.Pages.AdminPages
                             StoreLocationID = reader.GetInt32(0),
                             StoreNumber = reader.GetInt32(1),
                             StoreCity = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                            StoreState = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+                            StoreState = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                            IsActive = reader.GetBoolean(4)
                         };
                         Locations.Add(ALocation);
 
@@ -87,7 +88,7 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'PopulateLocationList'.
 
-        public IActionResult OnPostDelete(int id)
+        /*public IActionResult OnPostDelete(int id)
         {
             // delete the book from the database
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
@@ -99,7 +100,7 @@ namespace NewRecap.Pages.AdminPages
                 deleteCmd.ExecuteNonQuery();
             }
             return RedirectToPage();
-        }//End of 'OnPostDelete'.
+        }//End of 'OnPostDelete'.*/
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

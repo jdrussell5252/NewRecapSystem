@@ -21,6 +21,7 @@ namespace NewRecap.Pages.AdminPages
             {
                 return Forbid();
             }
+
             /*--------------------ADMIN PRIV----------------------*/
             // Safely access the NameIdentifier claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -118,5 +119,5 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
-}
+    }// End of 'EditStoreState' Class.
+}// End of 'namespace'.

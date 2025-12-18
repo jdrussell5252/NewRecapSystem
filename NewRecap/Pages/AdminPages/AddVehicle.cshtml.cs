@@ -55,10 +55,11 @@ namespace NewRecap.Pages.AdminPages
                 using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
                 {
                     conn.Open();
-                    string insertcmdText = "INSERT INTO Vehicle (VehicleNumber, VehicleModel) VALUES (@VehicleNumber, @VehicleModel);";
+                    string insertcmdText = "INSERT INTO Vehicle (VehicleNumber, VehicleModel, IsActive) VALUES (@VehicleNumber, @VehicleModel, @IsActive);";
                     SqlCommand insertcmd = new SqlCommand(insertcmdText, conn);
                     insertcmd.Parameters.AddWithValue("@VehicleNumber", NewVehicles.VehicleNumber);
                     insertcmd.Parameters.AddWithValue("@VehicleModel", NewVehicles.VehicleModel);
+                    insertcmd.Parameters.AddWithValue("@IsActive", true);
 
                     insertcmd.ExecuteNonQuery();
                 }
@@ -70,7 +71,7 @@ namespace NewRecap.Pages.AdminPages
                 // If the model state is not valid, return to the same page with validation errors
                 return Page();
             }
-        }
+        }// End of 'OnPost'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

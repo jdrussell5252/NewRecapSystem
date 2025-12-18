@@ -22,18 +22,19 @@ namespace NewRecap.Pages.AdminPages
 
         public IActionResult OnGet(int id, int pageNumber = 1, int pageSize = 5)
         {
+            // Safely access the NameIdentifier claim
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
+            if (userIdClaim != null)
+            {
+                CheckIfUserIsAdmin(userId);
+            }
+
             if (!User.IsInRole("Admin"))
             {
                 return Forbid();
             }
 
-            // Safely access the NameIdentifier claim
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim != null)
-            {
-                int userId = int.Parse(userIdClaim.Value); // Use the claim value only if it exists
-                CheckIfUserIsAdmin(userId);
-            }
             PopulateEmployeeList();
 
             // === Pagination logic ===
@@ -57,7 +58,7 @@ namespace NewRecap.Pages.AdminPages
                     .ToList();
             }
             return Page();
-        }
+        }// End of 'OnGet'.
 
         public IActionResult OnPostDelete(int id)
         {
@@ -83,7 +84,7 @@ namespace NewRecap.Pages.AdminPages
         {
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
-                string query = "SELECT e.EmployeeID, e.EmployeeFname, e.EmployeeLName, su.SystemUsername, su.SystemUserRole FROM Employee AS e INNER JOIN SystemUser AS su ON su.EmployeeID = e.EmployeeID";
+                string query = "SELECT e.EmployeeID, e.EmployeeFname, e.EmployeeLName, su.SystemUsername, su.SystemUserRole, su.IsActive FROM Employee AS e INNER JOIN SystemUser AS su ON su.EmployeeID = e.EmployeeID";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
@@ -97,7 +98,8 @@ namespace NewRecap.Pages.AdminPages
                             EmployeeFName = reader.GetString(1),
                             EmployeeLName = reader.GetString(2),
                             EmployeeUsername = reader.GetString(3),
-                            EmployeeRole = reader.GetBoolean(4)
+                            EmployeeRole = reader.GetBoolean(4),
+                            IsActive = reader.GetBoolean(5)
                         };
                         Employees.Add(Aemployee);
 
@@ -124,5 +126,5 @@ namespace NewRecap.Pages.AdminPages
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }
-}
+    }// End of 'BrowseEmployees' Class.
+}// End of 'namespace'.
