@@ -35,7 +35,7 @@ body {
 }
 /*----------------------------------------End of Registration Image--------------------------------------------*/
 
-.container {
+.home-container {
     display: flex;
     justify-content: center;
     gap: 100px; /* space between boxes */
@@ -138,7 +138,7 @@ body {
 }
 
 /*------------------------------*/
-.sidebar {
+.layout-sidebar {
     width: 220px;
     background-color: #343a40;
     color: white;
@@ -154,6 +154,113 @@ body {
     display: block;
 }
 
+/*------------------------Layouts-------------------------------------*/
+.layout-shell {
+    height: calc(100vh - 140px);
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+/* Rename to avoid conflict with your main sidebar */
+.layout-sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 12px;
+    color: #fff;
+    overflow-y: auto;
+}
+
+/* Canvas */
+.canvas-wrap {
+    flex: 1;
+    background: #0b0b0b;
+    border: 1px solid #333;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+}
+
+    .canvas-wrap.panning {
+        cursor: grabbing;
+    }
+
+/* Pan/zoom container */
+.world {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+    user-select: none;
+}
+
+.layout-img {
+    display: block;
+    max-width: none;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-drag: none;
+}
 
 
+.marker.marker-img {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(0,0,0,.25);
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+    .marker.marker-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        pointer-events: none;
+    }
+
+
+
+
+
+
+
+
+
+
+.cam-tile {
+    width: 110px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 10px;
+    padding: 8px;
+    background: rgba(0,0,0,.2);
+    cursor: grab;
+    user-select: none;
+}
+
+    .cam-tile:active {
+        cursor: grabbing;
+    }
+
+    .cam-tile img {
+        width: 100%;
+        height: 70px;
+        object-fit: contain;
+        display: block;
+    }
+
+.cam-label {
+    margin-top: 6px;
+    font-size: 12px;
+    opacity: .85;
+    text-align: center;
+    word-break: break-word;
+}
 

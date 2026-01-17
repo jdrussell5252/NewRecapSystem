@@ -1,0 +1,360 @@
+﻿@page
+@model NewRecap.Pages.SiteOwl.EditLayoutModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Edit Layout</label>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+        <div class="h3 m-0" id="LabelText">Edit Layout</div>
+        <div class="text-muted">
+            Layout: <strong>@Model.MyLayouts.LayoutName</strong>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary" id="btnReset">Reset View</button>
+        <button type="button" class="btn btn-primary" id="btnExport">Export JSON (temp)</button>
+    </div>
+</div>
+
+<div class="layout-shell">
+    <!-- LEFT SIDEBAR -->
+
+    <aside class="layout-sidebar">
+        <div class="mb-3">
+            <div class="fw-bold mb-1">Cameras</div>
+            <div class="hint">Pick a type, then click “Place”, then click on the layout.</div>
+        </div>
+
+        <div class="mb-3">
+            <!--Store Camera Type DropDown-->
+            <div class="col-12 mt-2">
+                <label asp-for="SelectedCameraID" class="form-label" id="LabelText">Camera Type:</label>
+            </div>
+            <div class="col-12">
+                <select asp-for="SelectedCameraID" asp-items="Model.Cameras" class="form-control">
+                    <option value="0">---Select Camera---</option>
+                </select>
+                <span asp-validation-for="SelectedCameraID" class="text-danger"></span>
+            </div>
+            <!--End of Camera Type DropDown-->
+        </div>
+
+        <div class="mt-3">
+            <div class="fw-bold mb-1" id="LabelText">Selected Camera Preview</div>
+            <div id="selectedCameraPreview" class="d-flex flex-wrap gap-2"></div>
+        </div>
+
+
+        @using System.Text.Json
+
+        <script>
+            window.__activeCameras = @Html.Raw(JsonSerializer.Serialize(
+                Model.ActiveCameras,
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }
+            ));
+        </script>
+
+    <!--<div class="mt-3">
+        <div class="fw-bold mb-1" id="LabelText">Selected Camera Preview</div>
+
+        <div class="col-6">
+            <img src="hardware.ImagePath" id="LayoutImg" alt="Layout Image" class="img-thumbnail" />
+        </div>
+    </div>-->
+            
+        
+
+    </aside>
+
+
+    <!-- RIGHT CANVAS -->
+    <section class="canvas-wrap" id="canvas">
+        <div class="world" id="world">
+            <img src="@Model.MyLayouts.ImagePath" alt="Layout" class="layout-img" id="layoutImg" />
+            <!-- markers injected here -->
+        </div>
+    </section>
+</div>
+
+
+
+<script>
+    (function () {
+
+      const ddl = document.querySelector('select[name="SelectedCameraID"]');
+      const preview = document.getElementById("selectedCameraPreview");
+      const active = window.__activeCameras || [];
+
+      // ====== View State ======
+      let scale = 1;
+      let panX = 0;
+      let panY = 0;
+
+      let isPanning = false;
+      let lastX = 0;
+      let lastY = 0;
+
+          // ====== Marker Drag State ======
+        let isDraggingMarker = false;
+        let draggedEl = null;
+        let draggedIndex = -1;       // index inside markers[]
+        let dragOffsetX = 0;         // world-space offset between cursor and marker center
+        let dragOffsetY = 0;
+
+
+      // ====== Marker State ======
+      const markers = []; // store placed markers for export/save
+
+      const canvas = document.getElementById("canvas");
+      const world = document.getElementById("world");
+      const placedList = document.getElementById("placedList"); // may be null, that's okay
+
+      function applyTransform() {
+        world.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      }
+
+      function clampScale(s) {
+        return Math.min(5, Math.max(0.2, s));
+      }
+
+      // Convert mouse position to world coords (accounts for pan/zoom)
+      function screenToWorld(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const sx = clientX - rect.left;
+        const sy = clientY - rect.top;
+        return { x: (sx - panX) / scale, y: (sy - panY) / scale };
+      }
+
+      // =========================
+      //  PREVIEW (FILTERED) + DRAG SOURCE  
+      // =========================
+      function renderPreview() {
+        if (!ddl || !preview) return;
+
+        const selectedId = ddl.value;
+        preview.innerHTML = "";
+
+        if (!selectedId || selectedId === "0") return;
+
+        // Filter by CameraTypeID (PK)
+        const filtered = active.filter(c => String(c.cameraTypeID) === String(selectedId));
+
+        filtered.forEach(c => {
+          const tile = document.createElement("div");
+
+          // Make it draggable
+          tile.className = "cam-tile";         // use a class instead of col-6
+          tile.draggable = true;
+
+          tile.innerHTML = `
+            <img src="${c.imagePath}" alt="${c.cameraName}" class="img-thumbnail" />
+            <div class="small text-muted mt-1">${c.cameraName}</div>
+          `;
+
+          // Drag payload
+          tile.addEventListener("dragstart", (ev) => {
+            ev.dataTransfer.effectAllowed = "copy";
+            ev.dataTransfer.setData("application/json", JSON.stringify({
+              cameraTypeID: c.cameraTypeID,
+              cameraName: c.cameraName,
+              imagePath: c.imagePath
+            }));
+          });
+
+          preview.appendChild(tile);
+        });
+      }
+
+      ddl?.addEventListener("change", renderPreview);
+      renderPreview(); // initial render
+
+      // =========================
+      //  DROP TARGET (CANVAS) 
+      // =========================
+      canvas.addEventListener("dragover", (e) => {
+        e.preventDefault(); // REQUIRED to allow drop
+        e.dataTransfer.dropEffect = "copy";
+      });
+
+      canvas.addEventListener("drop", (e) => {
+        e.preventDefault();
+
+        let payload;
+        try {
+          payload = JSON.parse(e.dataTransfer.getData("application/json"));
+        } catch {
+          return;
+        }
+
+        const p = screenToWorld(e.clientX, e.clientY);
+        createImageMarker(payload, p.x, p.y);
+      });
+
+      // =========================
+      //  CREATE MARKER 
+      // =========================
+    function createImageMarker(cam, x, y) {
+      const el = document.createElement("div");
+      el.className = "marker marker-img";
+      el.title = cam.cameraName || "Camera";
+
+      el.dataset.cameraTypeId = cam.cameraTypeID;
+      el.dataset.cameraName = cam.cameraName;
+      el.dataset.imagePath = cam.imagePath;
+
+      // center marker (34x34 marker)
+      el.style.left = (x - 17) + "px";
+      el.style.top  = (y - 17) + "px";
+
+      el.innerHTML = `<img src="${cam.imagePath}" alt="${cam.cameraName}" />`;
+
+      world.appendChild(el);
+
+      // push into markers[] and store the index on the element
+      const idx = markers.push({
+        cameraTypeID: cam.cameraTypeID,
+        cameraName: cam.cameraName,
+        imagePath: cam.imagePath,
+        x, y
+      }) - 1;
+
+      el.dataset.markerIndex = idx; // ✅ important
+    }
+
+
+      // ====== Grab-to-pan (left mouse down on empty space) ======
+      canvas.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return; // left click only
+
+        // ✅ prevent panning when clicking markers
+        if (e.target.closest(".marker")) return;
+
+        isPanning = true;
+        canvas.classList.add("panning");
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+
+      window.addEventListener("mouseup", () => {
+        isPanning = false;
+        canvas.classList.remove("panning");
+      });
+
+    window.addEventListener("mousemove", (e) => {
+      // If dragging a marker, move it in world coords
+      if (isDraggingMarker && draggedEl) {
+        const p = screenToWorld(e.clientX, e.clientY);
+
+        const newCenterX = p.x + dragOffsetX;
+        const newCenterY = p.y + dragOffsetY;
+
+        draggedEl.style.left = (newCenterX - 17) + "px";
+        draggedEl.style.top  = (newCenterY - 17) + "px";
+
+        // Keep markers[] in sync for Export
+        if (draggedIndex >= 0 && markers[draggedIndex]) {
+          markers[draggedIndex].x = newCenterX;
+          markers[draggedIndex].y = newCenterY;
+        }
+        return; // ✅ don't pan while dragging
+      }
+
+      // Otherwise pan
+      if (!isPanning) return;
+      panX += (e.clientX - lastX);
+      panY += (e.clientY - lastY);
+      lastX = e.clientX;
+      lastY = e.clientY;
+      applyTransform();
+    });
+
+
+      // ====== Zoom with wheel (zoom towards cursor) ======
+      canvas.addEventListener("wheel", (e) => {
+        e.preventDefault();
+
+        const oldScale = scale;
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        scale = clampScale(scale * factor);
+
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        panX = mx - (mx - panX) * (scale / oldScale);
+        panY = my - (my - panY) * (scale / oldScale);
+
+        applyTransform();
+      }, { passive: false });
+
+      document.getElementById("btnReset")?.addEventListener("click", () => {
+        scale = 1;
+        panX = 0;
+        panY = 0;
+        applyTransform();
+      });
+
+      document.getElementById("btnExport")?.addEventListener("click", () => {
+        alert(JSON.stringify({ layoutId: @Model.MyLayouts.id, markers }, null, 2));
+      });
+
+      applyTransform();
+
+      // Existing: load markers from DB (kept)
+      const placedFromDb = window.__placedCameras || [];
+      placedFromDb.forEach(c => {
+        createMarkerFromDb(c);
+      });
+
+      function createMarkerFromDb(c) {
+        const el = document.createElement("div");
+        el.className = "marker";
+        el.dataset.placementId = c.layoutCameraPlacementID;
+        el.dataset.cameraTypeId = c.cameraTypeID;
+        el.title = c.cameraName;
+
+        el.innerHTML = c.icon && c.icon.trim().length ? c.icon : "📷";
+
+        el.style.left = (c.x - 17) + "px";
+        el.style.top  = (c.y - 17) + "px";
+
+        world.appendChild(el);
+      }
+
+          world.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+
+      const marker = e.target.closest(".marker");
+      if (!marker) return;
+
+      // Start dragging marker
+      isDraggingMarker = true;
+      draggedEl = marker;
+
+      // Which markers[] entry does this element correspond to?
+      draggedIndex = parseInt(marker.dataset.markerIndex ?? "-1", 10);
+
+      // Compute offset so the marker doesn't "jump" to the cursor
+      const p = screenToWorld(e.clientX, e.clientY);
+
+      // current marker center in world coords:
+      const currentX = parseFloat(marker.style.left) + 17;
+      const currentY = parseFloat(marker.style.top) + 17;
+
+      dragOffsetX = currentX - p.x;
+      dragOffsetY = currentY - p.y;
+
+      // Prevent panning selection while dragging
+      e.preventDefault();
+    });
+
+
+    })();
+</script>

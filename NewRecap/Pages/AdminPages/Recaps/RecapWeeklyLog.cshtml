@@ -1,0 +1,202 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.Recaps.RecapWeeklyLogModel
+@{
+}
+
+
+<hr class="my-4" />
+
+<div class="row text-center mb-3">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">
+            Daily Recap Report
+        </label>
+        <div class="text-muted">
+            Auto-generated for @Model.DayDate.ToString("MMMM dd, yyyy")
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center mb-3">
+    <div class="col-6 text-center">
+        <form method="get">
+            <div class="input-group">
+                <input type="date" name="dayDate" class="form-control"
+                       value="@Model.DayDate.ToString("yyyy-MM-dd")" />
+                <button class="btn btn-primary" type="submit">View Daily Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+@if (Model.DailyReports.Any())
+{
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <table class="table table-dark table-bordered text-center align-middle">
+                <thead class="table-secondary text-dark">
+                    <tr>
+                        <th></th>
+                        @foreach (var report in Model.DailyReports)
+                        {
+                            <th>@report.EmployeeFName @report.EmployeeLName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>Work Hours</th>
+                        @foreach (var report in Model.DailyReports)
+                        {
+                            <td>@report.WeeklyWorkHours.ToString("0.00")</td>
+                        }
+                    </tr>
+                    <tr>
+                        <th>Travel Hours</th>
+                        @foreach (var report in Model.DailyReports)
+                        {
+                            <td>@report.WeeklyTravelHours.ToString("0.00")</td>
+                        }
+                    </tr>
+                    <tr>
+                        <th>Recap Hours</th>
+                        @foreach (var report in Model.DailyReports)
+                        {
+                            <td>@report.WeeklyRecapHours.ToString("0.00")</td>
+                        }
+                    </tr>
+                    <tr>
+                        <th>Total Hours</th>
+                        @foreach (var report in Model.DailyReports)
+                        {
+                            <td>@report.TotalHours.ToString("0.00")</td>
+                        }
+                    </tr>
+                    <tr>
+                        <th>Recap Count</th>
+                        @foreach (var report in Model.DailyReports)
+                        {
+                            <td>@report.WeeklyRecapCount</td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row text-center">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                No daily report has been generated for this day yet.
+            </div>
+        </div>
+    </div>
+}
+
+<div class="row text-center mb-3">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">
+            Weekly Recap Report
+        </label>
+        <div class="text-muted">
+            Auto-generated every Monday
+        </div>
+    </div>
+</div>
+
+<!-- Week Info -->
+<div class="row justify-content-center mb-4">
+    <div class="col-md-6 text-center">
+        <div class="alert alert-info fw-bold">
+            Week of
+            @Model.WeekStart.ToString("MMMM dd, yyyy")
+            –
+            @Model.WeekStart.AddDays(6).ToString("MMMM dd, yyyy")
+        </div>
+    </div>
+</div>
+
+@if (Model.WeeklyReports.Any())
+{
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <table class="table table-dark table-bordered text-center align-middle">
+                <thead class="table-secondary text-dark">
+                    <tr>
+                        <th></th>
+                        @foreach (var report in Model.WeeklyReports)
+                        {
+                            <th>@report.EmployeeFName @report.EmployeeLName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>Work Hours</th>
+                        @foreach (var report in Model.WeeklyReports)
+                        {
+                            <td>@report.WeeklyWorkHours.ToString("0.00")</td>
+                        }
+                    </tr>
+
+                    <tr>
+                        <th>Travel Hours</th>
+                        @foreach (var report in Model.WeeklyReports)
+                        {
+                            <td>@report.WeeklyTravelHours.ToString("0.00")</td>
+                        }
+                    </tr>
+
+                    <tr>
+                        <th>Support Hours</th>
+                        @foreach (var report in Model.WeeklyReports)
+                        {
+                            <td>@report.WeeklySupportHours.ToString("0.00")</td>
+                        }
+                    </tr>
+
+                    <tr>
+                        <th>Recap Hours</th>
+                        @foreach (var report in Model.WeeklyReports)
+                        {
+                            <td>@report.WeeklyRecapHours.ToString("0.00")</td>
+                        }
+                    </tr>
+
+                    <tr>
+                        <th>Total Hours</th>
+                        @foreach (var report in Model.WeeklyReports)
+                        {
+                            <td>@report.TotalHours.ToString("0.00")</td>
+                        }
+                    </tr>
+
+                    <tr>
+                        <th>Recap Count</th>
+                        @foreach (var report in Model.WeeklyReports)
+                        {
+                            <td>@report.WeeklyRecapCount</td>
+                        }
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row text-center">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                No weekly report has been generated for this period yet.
+            </div>
+        </div>
+    </div>
+}
+
+

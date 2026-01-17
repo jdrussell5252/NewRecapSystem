@@ -94,7 +94,7 @@ namespace NewRecap.Pages.CheckoutToolKit
             return RedirectToPage("/Index");
         }// End of 'OnPost'.
 
-        private void PopulateToolKitOptions()
+        /*private void PopulateToolKitOptions()
         {
             ToolKitOptions = new List<SelectListItem>();
 
@@ -121,6 +121,37 @@ namespace NewRecap.Pages.CheckoutToolKit
                                 Value = id.ToString(),
                                 Text = name
                             });
+                        }
+                    }
+                }
+            }
+        }// End of 'PopulateToolKitOptions'.*/
+
+        private void PopulateToolKitOptions()
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                    // Admins see all active toolkits
+                    string sql = @"
+                SELECT ToolKitID, ToolKitName, ToolKitBarcode
+                FROM ToolKit
+                WHERE IsActive = 0
+                ORDER BY ToolKitName;";
+
+                using (SqlCommand command = new SqlCommand(sql, conn))
+                {
+                    conn.Open();
+                    SqlDataReader reader = command.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            var toolkits = new SelectListItem()
+                            {
+                                Value = reader["ToolKitID"].ToString(),
+                                Text = $"{reader["ToolKitName"]} ({reader["ToolKitBarcode"]})"
+                            };
+                            ToolKitOptions.Add(toolkits);
                         }
                     }
                 }

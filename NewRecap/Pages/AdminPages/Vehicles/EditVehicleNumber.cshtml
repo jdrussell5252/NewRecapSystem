@@ -1,0 +1,27 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.Vehicles.EditVehicleNumberModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Edit Vehicle Number</label>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="row my-2">
+        <div class="col-12">
+            <label asp-for="Vehicles.VehicleNumber" class="form-label" id="LabelText">Vehicle Number:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="Vehicles.VehicleNumber" type="text" class="form-control" />
+            <span asp-validation-for="Vehicles.VehicleNumber" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col-12">
+            <button type="submit" class="form-control btn btn-primary">Confirm Edit</button>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,43 @@
+﻿@page
+@model NewRecap.Pages.SiteOwl.AddLayoutsModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Add Layout</label>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    <!--===================Layout Name Textbox==================-->
+    <div class="row">
+        <div class="col-12">
+            <label asp-for="NewLayout.LayoutName" class="form-label" id="LabelText">Layout Name:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="NewLayout.LayoutName" type="text" class="form-control" />
+            <span asp-validation-for="NewLayout.LayoutName" class="text-danger"></span>
+        </div>
+    </div>
+    <!--===================End of Layout Name Textbox==================-->
+
+    <!--===================Layout Image Textbox==================-->
+    <div class="row">
+        <div class="col-12">
+            <label asp-for="NewLayout.LayoutImage" class="form-label" id="LabelText">Layout Image:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="NewLayout.LayoutImage" type="file" class="form-control" />
+            <span asp-validation-for="NewLayout.LayoutImage" class="text-danger"></span>
+        </div>
+    </div>
+    <!--===================End of Layout Image Textbox==================-->
+    <!--Submit Button-->
+    <div class="row my-2">
+        <div class="col-12">
+            <button type="submit" class="form-control btn btn-primary"><i class="bi bi-plus-square"></i> Add Layout</button>
+        </div>
+    </div>
+    <!--End of Submit Button-->
+</form>

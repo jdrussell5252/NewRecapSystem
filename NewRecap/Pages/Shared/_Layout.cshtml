@@ -41,17 +41,17 @@
                 var isAdmin = ViewData["IsAdmin"] != null && (bool)ViewData["IsAdmin"];
                 @if (isAdmin)
                 {
-                    <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/BrowseStoreLocations">Locations</a>
-                    <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/BrowseEmployees">Employees</a>
-                    <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/RecapWeeklyLog">Recap Week Log</a>
+                    <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/StoreLocations/BrowseStoreLocations">Locations</a>
+                    <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/Employees/BrowseEmployees">Employees</a>
+                    <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/Recaps/RecapWeeklyLog">Recap Report</a>
                 }
 
-                <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/BrowseToolKits">Toolkits</a>
-                <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/BrowseRecaps">Recaps</a>
+                <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/Toolkits/BrowseToolKits">Toolkits</a>
+                <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/Recaps/BrowseRecaps">Recaps</a>
 
                 @if (isAdmin)
                 {
-                    <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/BrowseVehicles">Vehicles</a>
+                    <a class="d-block py-2 text-white" asp-area="" asp-page="/AdminPages/Vehicles/BrowseVehicles">Vehicles</a>
                 }
 
                 <a class="d-block py-2 text-white" asp-area="" asp-page="/Account/SignOut">Sign Out</a>
@@ -61,7 +61,7 @@
         </div>
     </div>
 
-    <div class="container">
+    <div class="container-fluid px-3">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>

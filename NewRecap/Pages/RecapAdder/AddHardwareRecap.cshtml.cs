@@ -2,13 +2,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using NewRecap.Model;
 using System.Security.Claims;
 using Outlook = Microsoft.Office.Interop.Outlook;
 
 using Microsoft.Data.SqlClient;
 using NewRecap.MyAppHelper;
 using System.Data;
+using NewRecap.Model.Employees;
+using NewRecap.Model.Recaps;
 
 namespace NewRecap.Pages.RecapAdder
 {

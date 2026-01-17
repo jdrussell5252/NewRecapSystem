@@ -7,14 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\Images\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
     <PackageReference Include="Microsoft.Office.Interop.Outlook" Version="15.0.4797.1004" />
     <PackageReference Include="System.Data.OleDb" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\HardwareImages\" />
+    <Folder Include="wwwroot\LayoutImages\" />
   </ItemGroup>
 
 </Project>

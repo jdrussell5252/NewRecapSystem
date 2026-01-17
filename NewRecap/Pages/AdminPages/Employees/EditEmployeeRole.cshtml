@@ -1,0 +1,30 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.Employees.EditEmployeeRoleModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Edit Employee Role</label>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="row my-2">
+        <div class="col-4">
+            <label asp-for="Employees.EmployeeRole" class="form-label" id="LabelText">Role:</label>
+        </div>
+        <div class="col-12">
+            <select asp-for="Employees.EmployeeRole" class="form-control">
+                <option value="true">Admin</option>
+                <option value="false">Employee</option>
+            </select>
+            <span asp-validation-for="Employees.EmployeeRole" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col-12">
+            <button type="submit" class="form-control btn btn-primary">Confirm Edit</button>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,92 @@
+﻿@page
+@model NewRecap.Pages.SiteOwl.BrowseLayoutsModel
+@{
+}
+
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Browse Layouts</label>
+    </div>
+</div>
+<div class="row my-2">
+    <div class="col-2">
+        <a asp-page="AddLayouts" class="btn btn-primary"><i class="bi bi-plus-square"></i> Add</a>
+    </div>
+    <div class="col-2">
+        <a asp-page="BrowseHardware" class="btn btn-primary">Browse Hardware</a>
+    </div>
+</div>
+
+@if (Model.Layouts.Count != 0)
+{
+    @foreach (var layout in @Model.Layouts)
+    {
+        <div class="row my-2">
+            <div class="col-6">
+                <!-- Layout Image column -->
+                <img src="@layout.ImagePath" id="LayoutImg" alt="Layout Image" class="img-thumbnail" />
+            </div>
+            <div class="col-10">
+                <!-- right column -->
+                <div class="row my-2">
+                    <div class="col-4">
+                        <label class="form-label" id="LabelText" asp-for="@layout.LayoutName">Layout Name:</label>
+                        <label class="form-label" id="LabelText">@layout.LayoutName</label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!--ADMIN PRIVS-->
+        var isAdmin = ViewData["IsAdmin"] != null && (bool)ViewData["IsAdmin"];
+        @if (isAdmin)
+        {
+            <form method="post" enctype=" multipart /form-data">
+                <a asp-page="/SiteOwl/EditLayout" asp-route-id="@layout.SiteLayoutID" class="btn btn-primary">Edit</a>
+                <button onclick="return confirm('Are you sure?')" class="btn btn-danger" asp-route-id="@layout.SiteLayoutID" asp-page-handler="Delete">Delete</button>
+            </form>
+        }
+        <hr />
+    }
+    @if (Model.TotalCount > 0)
+    {
+        <div class="text-center my-4">
+            <div class="nacspace-logo mb-3">
+                <span class="nacspace-color">N</span>
+                <span class="nacspace-color">a</span>
+                <span class="nacspace-color">c</span>
+                <span class="nacspace-color">S</span>
+                <span class="nacspace-color">p</span>
+                <span class="nacspace-color">a</span>
+                <span class="nacspace-color">c</span>
+                <span class="nacspace-color">e</span>
+            </div>
+
+            <div class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.PageNumber)
+                    {
+                        <span class="page-number active">@i</span>
+                    }
+                    else
+                    {
+                        <a class="page-number"
+                           asp-page="./BrowseLayouts"
+                           asp-route-pageNumber="@i"
+                           asp-route-pageSize="@Model.PageSize">@i</a>
+                    }
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="row my-2">
+        <div class="col-12">
+            <label class="form-label" id="LabelText">No layouts yet. Click 'Add Layout' to add a new layout.</label>
+        </div>
+    </div>
+}

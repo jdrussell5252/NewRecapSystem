@@ -1,0 +1,60 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.StoreLocations.AddStoreLocationsModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Add Location:</label>
+    </div>
+</div>
+    
+<form method="post">
+        
+    <div class="row">
+
+        <!--===================Store Number Textbox==================-->
+        <div class="row">
+            <div class="col-4">
+                <label asp-for="NewLocation.StoreNumber" class="form-label" id="LabelText">Store Number:</label>
+            </div>
+            <div class="col-12">
+                <input asp-for="NewLocation.StoreNumber" type="number" class="form-control" />
+                <span asp-validation-for="NewLocation.StoreNumber" class="text-danger"></span>
+            </div>
+        </div>
+        <!--===================End of Store Number Textbox==================-->
+
+        <!--===================State Textbox==================-->
+        <div class="row">
+            <div class="col-4">
+                <label asp-for="NewLocation.StoreState" class="form-label" id="LabelText">Store State:</label>
+            </div>
+            <div class="col-12">
+                <input asp-for="NewLocation.StoreState" type="text" class="form-control" />
+                <span asp-validation-for="NewLocation.StoreState" class="text-danger"></span>
+            </div>
+        </div>
+        <!--===================End of State Textbox==================-->
+
+        <!--===================City Textbox==================-->
+        <div class="row">
+            <div class="col-4">
+                <label asp-for="NewLocation.StoreCity" class="form-label" id="LabelText">Store City:</label>
+            </div>
+            <div class="col-12">
+                <input asp-for="NewLocation.StoreCity" type="text" class="form-control" />
+                <span asp-validation-for="NewLocation.StoreCity" class="text-danger"></span>
+            </div>
+        </div>
+        <!--===================End of City Textbox==================-->
+
+        <!--===================Submit Button==================-->
+        <div class="row my-2">
+            <div class="col-12">
+                <button type="submit" class="form-control btn btn-primary"> Confirm </button>
+            </div>
+        </div>
+        <!--=================End of Submit Button==================-->
+    </div>
+</form>

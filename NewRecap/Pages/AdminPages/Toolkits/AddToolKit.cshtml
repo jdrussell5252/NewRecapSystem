@@ -1,0 +1,50 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.Toolkits.AddToolKitModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Add Toolkit</label>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    <!--===================ToolKitName Textbox==================-->
+    <div class="row">
+        <div class="col-12">
+            <label asp-for="ToolKit.ToolKitName" class="form-label" id="LabelText">Toolkit Name:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="ToolKit.ToolKitName" type="text" class="form-control" />
+            <span asp-validation-for="ToolKit.ToolKitName" class="text-danger"></span>
+        </div>
+    </div>
+    <!--===================End of ToolKitName Textbox==================-->
+
+    <!--===================Barcode VALUE (scanned)==================-->
+    <div class="row my-2">
+        <div class="col-12">
+            <label asp-for="ToolKit.BarcodeValue " class="form-label" id="LabelText">
+                Toolkit Barcode Value:
+            </label>
+        </div>
+        <div class="col-12">
+            <!-- Scanner will "type" into this box -->
+            <input asp-for="ToolKit.BarcodeValue "
+                   type="text"
+                   class="form-control"
+                   autofocus />
+            <span asp-validation-for="ToolKit.BarcodeValue " class="text-danger"></span>
+        </div>
+    </div>
+    <!--===================End of Barcode VALUE==================-->
+
+    <!--Submit Button-->
+    <div class="row my-2">
+        <div class="col-12">
+            <button type="submit" class="form-control btn btn-primary"><i class="bi bi-plus-square"></i> Add Toolkit</button>
+        </div>
+    </div>
+    <!--End of Submit Button-->
+</form>

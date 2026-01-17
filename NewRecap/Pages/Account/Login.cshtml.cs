@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
-using NewRecap.Model;
 
 using NewRecap.MyAppHelper;
 using Microsoft.Data.SqlClient;
+using NewRecap.Model.LoginRegistration;
 
 namespace NewRecap.Pages.Account
 {

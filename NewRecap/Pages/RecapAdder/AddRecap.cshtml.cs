@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using NewRecap.Model;
 using System.Security.Claims;
 using Microsoft.Data.SqlClient;
 using NewRecap.MyAppHelper;
 using System.Data;
+using NewRecap.Model.CableSegments;
+using NewRecap.Model.Employees;
+using NewRecap.Model.Recaps;
 
 namespace NewRecap.Pages.RecapAdder
 {

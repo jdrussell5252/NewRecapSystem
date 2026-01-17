@@ -1,0 +1,134 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.StoreLocations.BrowseStoreLocationsModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Browse Location</label>
+    </div>
+</div>
+
+<!-- Error Message-->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["ErrorMessage"]
+    </div>
+}
+<div class="row my-2">
+    <div class="col-2">
+        <a asp-page="AddStoreLocations" class="btn btn-primary"><i class="bi bi-plus-square"></i> Add</a>
+    </div>
+</div>
+
+
+@if (Model.Locations.Count != 0)
+{
+    @foreach (var LocalLocation in Model.Locations)
+    {
+        <div class="row my-3 p-4 bg-dark text-white border border-secondary rounded align-items-center text-center">
+
+            <!-- Column 1 -->
+            <div class="col-md-3 border-end border-secondary">
+                <label class="form-label fw-bold">Store Number:</label>
+                <div>@LocalLocation.StoreNumber</div>
+
+                <a asp-page="EditStoreNumber"
+                   asp-route-id="@LocalLocation.StoreLocationID"
+                   class="btn btn-primary btn-sm my-1">
+                    <i class="bi bi-pencil-square"></i> Edit Number
+                </a>
+
+                <!-- Delete Button -->
+                <!--<form method="post" asp-page-handler="Delete" class="mt-2">
+                    <input type="hidden" name="id" value="@LocalLocation.StoreLocationID" />
+                    <button onclick="return confirm('Are you sure?')"
+                            class="btn btn-danger btn-sm">
+                        <i class="bi bi-trash3"></i> Delete
+                    </button>
+                </form>-->
+            </div>
+
+            <!-- Column 2 -->
+            <div class="col-md-3 border-end border-secondary">
+                <label class="form-label fw-bold">Store City:</label>
+                <div>@(LocalLocation.StoreCity)</div>
+
+                <a asp-page="EditStoreCity"
+                   asp-route-id="@LocalLocation.StoreLocationID"
+                   class="btn btn-primary btn-sm my-1">
+                    <i class="bi bi-pencil-square"></i> Edit City
+                </a>
+            </div>
+
+            <!-- Column 3 -->
+            <div class="col-md-3 border-end border-secondary">
+                <label class="form-label fw-bold">Store State:</label>
+                <div>@(LocalLocation.StoreState)</div>
+
+                <a asp-page="EditStoreState"
+                   asp-route-id="@LocalLocation.StoreLocationID"
+                   class="btn btn-primary btn-sm my-1">
+                    <i class="bi bi-pencil-square"></i> Edit State
+                </a>
+            </div>
+
+            <!-- Column 4 -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Store Is Active:</label>
+                <div>@(LocalLocation.IsActive ? "Active" : "Inactive")</div>
+
+                <a asp-page="EditStoreLocationIsActive"
+                   asp-route-id="@LocalLocation.StoreLocationID"
+                   class="btn btn-primary btn-sm my-1">
+                    <i class="bi bi-pencil-square"></i> Edit Status
+                </a>
+            </div>
+        </div>
+
+        <hr />
+    }
+    @if (Model.TotalCount > 0)
+    {
+        <div class="text-center my-4">
+            <div class="nacspace-logo mb-3">
+                <span class="nacspace-color">N</span>
+                <span class="nacspace-color">a</span>
+                <span class="nacspace-color">c</span>
+                <span class="nacspace-color">S</span>
+                <span class="nacspace-color">p</span>
+                <span class="nacspace-color">a</span>
+                <span class="nacspace-color">c</span>
+                <span class="nacspace-color">e</span>
+            </div>
+
+            <div class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.PageNumber)
+                    {
+                        <span class="page-number active">@i</span>
+                    }
+                    else
+                    {
+                        <a class="page-number"
+                           asp-page="./BrowseStoreLocations"
+                           asp-route-pageNumber="@i"
+                           asp-route-pageSize="@Model.PageSize">@i</a>
+                    }
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="row my-2">
+        <div class="col-12">
+            <label class="form-label" id="LabelText">No Store Locations yet. Click 'Add Store Location' to add a new store location.</label>
+        </div>
+    </div>
+}
+
+

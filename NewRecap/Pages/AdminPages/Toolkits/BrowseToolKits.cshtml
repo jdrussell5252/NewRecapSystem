@@ -1,0 +1,203 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.Toolkits.BrowseToolKitsModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Browse Toolkits</label>
+
+        <!-- Little floating filter icon -->
+        <button type="button"
+        class="btn btn-outline-light btn-sm"
+        id="filterToggleBtn">
+            &#x1F50D; <!-- magnifying glass icon -->
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('filterToggleBtn');
+    const card = document.getElementById('filterCard');
+
+    if (btn && card) {
+    btn.addEventListener('click', function () {
+    card.classList.toggle('d-none'); // Bootstrap utility
+    });
+    }
+    });
+</script>
+
+<!-- Hidden filter card -->
+<div id="filterCard" class="recap-filter-card d-none">
+    <div class="col-12">
+        <label class="form-label fs-4" id="LabelText">Filter Toolkits</label>
+    </div>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-6">
+            <label class="form-label" id="LabelText" asp-for="FilterToolkitName">Toolkit Name:</label>
+            <input asp-for="FilterToolkitName"
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Toolkit Name" />
+        </div>
+
+        <!--Barcode Textbox-->
+        <div class="col-12 col-md-6">
+            <label class="form-label" id="LabelText" asp-for="FilterToolkitBarcode">Toolkit Barcode:</label>
+            <input asp-for="FilterToolkitBarcode"
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Toolkit Barcode" />
+        </div>
+        <!--End of Barcode Textbox-->
+
+        <div class="col-12 mt-1 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary btn-sm me-1">Search</button>
+            <a asp-page="./BrowseToolKits" class="btn btn-outline-light btn-sm">Clear</a>
+        </div>
+    </form>
+</div>
+
+
+<!-- Error Message-->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@{
+    var isAdmin = ViewData["IsAdmin"] != null && (bool)ViewData["IsAdmin"];
+}
+
+@if (isAdmin)
+{
+    <div class="row my-2">
+        <div class="col-2">
+            <a asp-page="AddToolKit" class="btn btn-primary"><i class="bi bi-plus-square"></i> Add</a>
+        </div>
+    </div>
+}
+
+@if (Model.Toolkit.Count > 0)
+{
+    @foreach (var LocalToolkit in Model.Toolkit)
+    {
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <!-- Toolkit info -->
+                    <div class="col-md-7 text-center text-md-start mb-2 mb-md-0">
+
+                        @if (isAdmin)
+                        {
+                            <!-- Delete button -->
+                            <div class="col-md-1 text-center mb-2 mb-md-0">
+                                <form method="post" asp-page-handler="Delete">
+                                    <input type="hidden" name="id" value="@LocalToolkit.ToolKitID" />
+                                    <button onclick="return confirm('Are you sure?')"
+                                            class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        }
+
+                        <div class="fw-bold fs-5 mb-1">
+                            @LocalToolkit.ToolKitName
+                        </div>
+
+                        <div class="fw-bold fs-5 mb-1">
+                            @LocalToolkit.BarcodeValue
+                        </div>
+
+                        <div class="mb-1">
+                            <span class="badge @(LocalToolkit.IsActive ? "bg-success" : "bg-danger")">
+                                @(!LocalToolkit.IsActive ? "Available" : "Checked Out")
+                            </span>
+                        </div>
+
+                        @if (LocalToolkit.IsActive)
+                        {
+                            <div class="text-muted small">
+                                <i class="bi bi-person-badge"></i>
+                                Checked out to @LocalToolkit.CurrentEmployeeName
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-md-4 text-center text-md-end">
+                        @if (isAdmin)
+                        {
+
+                            <a asp-page="EditToolKit"
+                               asp-route-id="@LocalToolkit.ToolKitID"
+                               class="btn btn-sm btn-outline-primary me-1">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+
+                        }
+
+                        @* Only show Return if this user owns it or is admin *@
+                        @if (LocalToolkit.CanReturn)
+                        {
+                            <a asp-page="/CheckoutToolKit/ToolKitReturn"
+                               asp-route-toolKitId="@LocalToolkit.ToolKitID"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-box-arrow-right"></i>
+                                Return
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.TotalCount > 0)
+    {
+        <div class="text-center my-4">
+            <div class="nacspace-logo mb-3">
+                <span class="nacspace-color">N</span>
+                <span class="nacspace-color">a</span>
+                <span class="nacspace-color">c</span>
+                <span class="nacspace-color">S</span>
+                <span class="nacspace-color">p</span>
+                <span class="nacspace-color">a</span>
+                <span class="nacspace-color">c</span>
+                <span class="nacspace-color">e</span>
+            </div>
+
+            <div class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.PageNumber)
+                    {
+                        <span class="page-number active">@i</span>
+                    }
+                    else
+                    {
+                        <a class="page-number"
+                           asp-page="./BrowseToolKits"
+                           asp-route-pageNumber="@i"
+                           asp-route-pageSize="@Model.PageSize">@i</a>
+                    }
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="row my-2">
+        <div class="col-12 text-center">
+            <label class="form-label" id="LabelText">
+                No toolkits yet.
+            </label>
+        </div>
+    </div>
+}

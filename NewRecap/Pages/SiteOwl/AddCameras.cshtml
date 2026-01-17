@@ -1,0 +1,58 @@
+﻿@page
+@model NewRecap.Pages.SiteOwl.AddCamerasModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Add Camera</label>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    <!--===================Camera Type Textbox==================-->
+    <div class="row my-2">
+        <div class="col-12">
+            <label asp-for="Cams.CameraType" class="form-label" id="LabelText">Camera Type:</label>
+        </div>
+        <div class="col-12">
+            <select asp-for="Cams.CameraType" class="form-control">
+                <option value="Bullet">Bullet</option>
+                <option value="Dome">Dome</option>
+            </select>
+            <span asp-validation-for="Cams.CameraType" class="text-danger"></span>
+        </div>
+    </div>
+    <!--===================End of Camera Type Textbox==================-->
+
+    <!--===================Camera Name Textbox==================-->
+    <div class="row">
+        <div class="col-12">
+            <label asp-for="Cams.CameraName" class="form-label" id="LabelText">Camera Name:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="Cams.CameraName" type="text" class="form-control" />
+            <span asp-validation-for="Cams.CameraName" class="text-danger"></span>
+        </div>
+    </div>
+    <!--===================End of Camera Name Textbox==================-->
+
+    <!--===================Camera Image Textbox==================-->
+    <div class="row">
+        <div class="col-12">
+            <label asp-for="Cams.ImagePath" class="form-label" id="LabelText">Camera Image:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="Cams.ImagePath" type="file" class="form-control" />
+            <span asp-validation-for="Cams.ImagePath" class="text-danger"></span>
+        </div>
+    </div>
+    <!--===================End of Camera Image Textbox==================-->
+    <!--Submit Button-->
+    <div class="row my-2">
+        <div class="col-12">
+            <button type="submit" class="form-control btn btn-primary"><i class="bi bi-plus-square"></i> Add Camera</button>
+        </div>
+    </div>
+    <!--End of Submit Button-->
+</form>

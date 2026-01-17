@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
+using NewRecap.Model;
 using NewRecap.MyAppHelper;
 using System.Security.Claims;
 
@@ -118,7 +119,7 @@ namespace NewRecap.Pages.CheckoutToolKit
             return 0;
         }// End of 'GetEmployeeIdForUser'.
 
-        private void PopulateToolKitOptions(int? employeeId)
+        /*private void PopulateToolKitOptions(int? employeeId)
         {
             ToolKitOptions = new List<SelectListItem>();
 
@@ -168,6 +169,41 @@ namespace NewRecap.Pages.CheckoutToolKit
                         }
                     }
                 }
+            }
+        }// End of 'PopulateToolKitOptions'.*/
+
+        private void PopulateToolKitOptions(int? employeeId)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                if (IsAdmin)
+                {
+                    // Admins see all active toolkits
+                    string sql = @"
+                SELECT ToolKitID, ToolKitName, ToolKitBarcode
+                FROM ToolKit
+                WHERE IsActive = 1
+                ORDER BY ToolKitName;";
+
+                    using (SqlCommand command = new SqlCommand(sql, conn))
+                    {
+                        conn.Open();
+                        SqlDataReader reader = command.ExecuteReader();
+                        if (reader.HasRows)
+                        {
+                            while (reader.Read())
+                            {
+                                var toolkits = new SelectListItem()
+                                {
+                                    Value = reader["ToolKitID"].ToString(),
+                                    Text = $"{reader["ToolKitName"]} ({reader["ToolKitBarcode"]})"
+                                };
+                                ToolKitOptions.Add(toolkits);
+                            }
+                        }
+                    }
+                }
+                
             }
         }// End of 'PopulateToolKitOptions'.
 

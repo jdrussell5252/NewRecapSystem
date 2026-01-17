@@ -1,0 +1,152 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.Employees.BrowseEmployeesModel
+@{
+}
+
+<div class="row text-center">
+    <div class="col-12">
+        <label class="form-label fs-1" id="LabelText">Browse Employees</label>
+    </div>
+</div>
+
+<div class="row my-2">
+    <div class="col-2">
+        <a asp-page="/Account/Register" class="btn btn-primary"><i class="bi bi-plus-square"></i> Add</a>
+    </div>
+</div>
+
+<!-- Error Message-->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (Model.Employees.Count != 0)
+{
+    @foreach (var LocalEmployee in Model.Employees)
+    {
+        <div class="row my-3 p-4 bg-dark text-white border border-secondary rounded align-items-center text-center">
+
+            <!--===================Delete Button==================-->
+            <div class="col-md-1">
+                <form method="post" asp-page-handler="Delete">
+                    <input type="hidden" name="id" value="@LocalEmployee.EmployeeID" />
+                    <button onclick="return confirm('Are you sure?')" class="deleteBtn btn-danger">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!--===================End of Delete Button==================-->
+
+            <!-- 4 equal columns -->
+            <div class="col">
+                <div class="row text-center g-3 row-cols-1 row-cols-md-5">
+
+
+                    <!--===================Employee First Name Box==================-->
+                    <div class="col border-end border-secondary">
+
+                        <label class="form-label fw-bold d-block employee-label">Employee First Name:</label>
+                        <div>@LocalEmployee.EmployeeFName</div>
+                        <a asp-page="EditEmployeeFName" asp-route-id="@LocalEmployee.EmployeeID" class="btn btn-primary mt-auto">
+                            <i class="bi bi-pencil-square"></i> Edit First Name
+                        </a>
+                    </div>
+                    <!--===================End of Employee First Name Box==================-->
+
+                    <!--===================Employee Last Name Box==================-->
+                    <div class="col border-end border-secondary">
+
+                        <label class="form-label fw-bold d-block employee-label">Employee Last Name:</label>
+                        <div>@(LocalEmployee.EmployeeLName)</div>
+                        <a asp-page="EditEmployeeLName" asp-route-id="@LocalEmployee.EmployeeID" class="btn btn-primary mt-auto">
+                            <i class="bi bi-pencil-square"></i> Edit Last Name
+                        </a>
+                    </div>
+                    <!--===================End of Employee Last Name Box==================-->
+
+                    <!--===================Employee Username Box==================-->
+                    <div class="col border-end border-secondary">
+
+                        <label class="form-label fw-bold d-block employee-label">Employee Username:</label>
+                        <div>@(LocalEmployee.EmployeeUsername)</div>
+                        <a asp-page="EditEmployeeUsername" asp-route-id="@LocalEmployee.EmployeeID" class="btn btn-primary mt-auto">
+                            <i class="bi bi-pencil-square"></i> Edit Username
+                        </a>
+                    </div>
+                    <!--===================End of Employee Username Box==================-->
+
+                    <!--===================Employee Role Box==================-->
+                    <div class="col border-end border-secondary">
+
+                        <label class="form-label fw-bold d-block employee-label">Employee Is Admin:</label>
+                        <div>@LocalEmployee.EmployeeRole</div>
+                        <a asp-page="EditEmployeeRole" asp-route-id="@LocalEmployee.EmployeeID" class="btn btn-primary mt-auto">
+                            <i class="bi bi-pencil-square"></i> Edit User Role
+                        </a>
+                    </div>
+                    <!--===================End of Employee Role Box==================-->
+
+                    <!--===================Employee Is Active Box==================-->
+                    <div class="col">
+
+                        <label class="form-label fw-bold">Employee Is Active:</label>
+                        <div>@(LocalEmployee.IsActive ? "Active" : "Inactive")</div>
+
+                        <a asp-page="EditEmployeeIsActive"
+                           asp-route-id="@LocalEmployee.EmployeeID"
+                           class="btn btn-primary btn-sm my-1">
+                            <i class="bi bi-pencil-square"></i> Edit Status
+                        </a>
+                    </div>
+                    <!--===================End of Employee Is Active Box==================-->
+                </div>
+            </div>
+        </div>
+        <hr />
+
+    }
+    @if (Model.TotalCount > 0)
+    {
+        <div class="text-center my-4">
+            <div class="nacspace-logo mb-3">
+                <span class="nacspace-color">N</span>
+                <span class="nacspace-color">a</span>
+                <span class="nacspace-color">c</span>
+                <span class="nacspace-color">S</span>
+                <span class="nacspace-color">p</span>
+                <span class="nacspace-color">a</span>
+                <span class="nacspace-color">c</span>
+                <span class="nacspace-color">e</span>
+            </div>
+
+            <div class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.PageNumber)
+                    {
+                        <span class="page-number active">@i</span>
+                    }
+                    else
+                    {
+                        <a class="page-number"
+                           asp-page="./BrowseEmployees"
+                           asp-route-pageNumber="@i"
+                           asp-route-pageSize="@Model.PageSize">@i</a>
+                    }
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="row my-2">
+        <div class="col-12">
+            <label class="form-label" id="LabelText">No employees yet.</label>
+        </div>
+    </div>
+}
