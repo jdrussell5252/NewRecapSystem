@@ -105,7 +105,7 @@ namespace NewRecap.Pages.AdminPages.Employees
                     }
                 }
             }
-        }//End of 'PopulateLocationList'.
+        }//End of 'PopulateEmployeeList'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

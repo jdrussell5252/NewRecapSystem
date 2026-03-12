@@ -98,7 +98,7 @@ namespace NewRecap.Pages.AdminPages.Vehicles
                     }
                 }
             }
-        }//End of 'PopulateLocationList'.
+        }//End of 'PopulateVehicleList'.
 
         /*--------------------ADMIN PRIV----------------------*/
         private void CheckIfUserIsAdmin(int userId)

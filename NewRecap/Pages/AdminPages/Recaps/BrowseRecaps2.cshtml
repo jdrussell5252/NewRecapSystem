@@ -1,0 +1,421 @@
+﻿@page
+@model NewRecap.Pages.AdminPages.Recaps.BrowseRecaps2Model
+@{
+    var isAdmin = ViewData["IsAdmin"] != null && (bool)ViewData["IsAdmin"];
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<div class="row text-center">
+    <div class="col-12 d-flex justify-content-center align-items-center">
+        <label class="form-label fs-1 me-2" id="LabelText">Browse Recaps</label>
+
+        <!-- Little floating filter icon -->
+        <button type="button" class="btn btn-outline-light btn-sm" id="filterToggleBtn" aria-label="Toggle filters">
+            &#x1F50D;
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('filterToggleBtn');
+        const card = document.getElementById('filterCard');
+
+        if (btn && card) {
+            btn.addEventListener('click', function () {
+                card.classList.toggle('d-none');
+            });
+        }
+
+        const employeeSelect = document.querySelector('.js-employee-choices');
+        if (employeeSelect) {
+            new Choices(employeeSelect, {
+                removeItemButton: true,
+                searchEnabled: true,
+                shouldSort: true,
+                placeholderValue: 'Type to search employees',
+                searchPlaceholderValue: 'Search employees...'
+            });
+        }
+
+        const storeSelect = document.querySelector('.js-store-choices');
+        if (storeSelect) {
+            new Choices(storeSelect, {
+                removeItemButton: true,
+                searchEnabled: true,
+                shouldSort: true,
+                placeholderValue: 'Type to search by stores',
+                searchPlaceholderValue: 'Search stores...'
+            });
+        }
+    });
+</script>
+
+<!-- Hidden filter card -->
+<div id="filterCard" class="recap-filter-card d-none">
+    <div class="col-12">
+        <label class="form-label fs-4" id="LabelText">Filter Recaps</label>
+    </div>
+
+    <form method="get" class="row g-2 align-items-end">
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <label class="form-label" id="LabelText" asp-for="FilterWorkorderNumber"></label>
+                <input asp-for="FilterWorkorderNumber"
+                       type="number"
+                       class="form-control form-control-sm"
+                       placeholder="e.g. 123" />
+            </div>
+
+            <div class="col-12 col-md-6">
+                <label class="form-label" id="LabelText">Store</label>
+                <select asp-for="SelectedStoreId"
+                        asp-items="Model.StoreOptions"
+                        class="form-select form-select-sm js-store-choices">
+                </select>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" id="LabelText" asp-for="FilterDate">Date:</label>
+            <input asp-for="FilterDate"
+                   type="date"
+                   class="form-control form-control-sm" />
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" id="LabelText" asp-for="FilterCustomer">Customer:</label>
+            <input asp-for="FilterCustomer"
+                   type="text"
+                   class="form-control form-control-sm"
+                   placeholder="Customer name" />
+        </div>
+
+        <div class="col-12">
+            <label class="form-label" id="LabelText">Technician:</label>
+            <select asp-for="SelectedEmployeeIds"
+                    asp-items="Model.EmployeeOptions"
+                    class="form-select js-employee-choices"
+                    multiple>
+            </select>
+            <span asp-validation-for="SelectedEmployeeIds" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 mt-1 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary btn-sm me-1">Search</button>
+            <a asp-page="./BrowseRecaps2" class="btn btn-outline-light btn-sm">Clear</a>
+        </div>
+    </form>
+</div>
+
+<hr style="border: 1px solid white; opacity: 1;" />
+
+@if (Model.Recaps != null && Model.Recaps.Count > 0)
+{
+    @foreach (var recap in Model.Recaps)
+    {
+        var collapseId = $"recap_{recap.RecapID}";
+        var headingId = $"heading_{recap.RecapID}";
+
+        <div class="card my-2">
+            <!-- Summary row (click to expand) -->
+            <div class="card-header" id="@headingId">
+                <button class="btn2 w-100 text-start d-flex justify-content-between align-items-center"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#@collapseId"
+                        aria-expanded="false"
+                        aria-controls="@collapseId">
+
+                    <div>
+                        <div class="fw-bold">
+                            WO #@recap.RecapWorkorderNumber
+                            <span class="ms-2">(@recap.RecapDate.ToString("MM/dd/yyyy"))</span>
+
+                            @if (recap.IsHardwareRecap)
+                            {
+                                <span class="badge bg-info text-dark ms-2">Hardware</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary ms-2">Standard</span>
+                            }
+                        </div>
+
+                        <div class="small opacity-75">
+                            @if (recap.IsHardwareRecap)
+                            {
+                                <span>@recap.RecapStoreLocation</span>
+                            }
+                            else
+                            {
+                                <span>Customer: @recap.Customer</span>
+                                <span class="ms-2">Location: @recap.RecapCity, @recap.RecapState</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <span class="badge bg-secondary">Total: @recap.TotalTime hr</span>
+                        <span class="badge bg-secondary ms-1">Techs: @(recap.RecapEmployees?.Count ?? 0)</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Expandable details -->
+            <div id="@collapseId" class="collapse">
+                <div class="card-body">
+
+                    @if (recap.IsHardwareRecap)
+                    {
+                        <!-- Hardware recap details -->
+                        <div class="row g-2">
+                            <div class="col-12 col-md-6">
+                                <div class="fw-bold" id="LabelTextTwo">Workorder Number</div>
+                                <div>@recap.RecapWorkorderNumber</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="fw-bold" id="LabelTextTwo">Recap Date</div>
+                                <div>@recap.RecapDate.ToString("MM/dd/yyyy")</div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="fw-bold" id="LabelTextTwo">Recap Description</div>
+                                <div>@recap.RecapDescription</div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="fw-bold" id="LabelTextTwo">Store</div>
+                                <div>@recap.RecapStoreLocation</div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="fw-bold" id="LabelTextTwo">Segments</div>
+                                <div>@Html.Raw(recap.Segments)</div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="fw-bold" id="LabelTextTwo">Time Summary</div>
+                                <div>
+                                    Work: @recap.TotalWorkTime hr
+                                    @if (recap.TotalLunchTime > 0)
+                                    {
+                                        <span> | Lunch: @recap.TotalLunchTime hr</span>
+                                    }
+                                    <span> | Recap: @recap.TotalRecapTime hr</span>
+                                    <span> | Total: @recap.TotalTime hr</span>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(recap.Hostname))
+                            {
+                                <div class="col-12 col-md-4">
+                                    <div class="fw-bold" id="LabelTextTwo">Hostname</div>
+                                    <div>@recap.Hostname</div>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(recap.IP))
+                            {
+                                <div class="col-12 col-md-4">
+                                    <div class="fw-bold" id="LabelTextTwo">IP</div>
+                                    <div>@recap.IP</div>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(recap.WAM))
+                            {
+                                <div class="col-12 col-md-4">
+                                    <div class="fw-bold" id="LabelTextTwo">WAM</div>
+                                    <div>@recap.WAM</div>
+                                </div>
+                            }
+
+                            @if (recap.RecapAssetNumber > 0)
+                            {
+                                <div class="col-12 col-md-6">
+                                    <div class="fw-bold" id="LabelTextTwo">Asset Number</div>
+                                    <div>@recap.RecapAssetNumber</div>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(recap.RecapSerialNumber))
+                            {
+                                <div class="col-12 col-md-6">
+                                    <div class="fw-bold" id="LabelTextTwo">Serial Number</div>
+                                    <div>@recap.RecapSerialNumber</div>
+                                </div>
+                            }
+
+                            <div class="col-12 mt-2">
+                                <div class="fw-bold" id="LabelTextTwo">Employees</div>
+                                @foreach (var emp in recap.RecapEmployees ?? new List<string>())
+                                {
+                                    <span class="badge bg-secondary">@emp</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Standard recap details -->
+                        <div class="row g-2">
+                            <div class="col-12 col-md-6">
+                                <div class="fw-bold" id="LabelTextTwo">Workorder Number</div>
+                                <div>@recap.RecapWorkorderNumber</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="fw-bold" id="LabelTextTwo">Recap Date</div>
+                                <div>@recap.RecapDate.ToString("MM/dd/yyyy")</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="fw-bold" id="LabelTextTwo">Customer</div>
+                                <div>@recap.Customer</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <div class="fw-bold" id="LabelTextTwo">Location</div>
+                                <div>@recap.RecapCity, @recap.RecapState</div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="fw-bold" id="LabelTextTwo">Recap Description</div>
+                                <div>@recap.RecapDescription</div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(recap.RecapVehicle))
+                            {
+                                <div class="col-12 col-md-6">
+                                    <div class="fw-bold" id="LabelTextTwo">Vehicle Used</div>
+                                    <div>@recap.RecapVehicle</div>
+                                </div>
+                            }
+
+                            @if (recap.StartingMileage > 0 || recap.EndingMileage > 0)
+                            {
+                                <div class="col-12 col-md-6">
+                                    <div class="fw-bold" id="LabelTextTwo">Mileage</div>
+                                    <div>
+                                        @if (recap.StartingMileage > 0)
+                                        {
+                                            <span>Start: @recap.StartingMileage</span>
+                                        }
+                                        @if (recap.EndingMileage > 0)
+                                        {
+                                            <span class="ms-2">End: @recap.EndingMileage</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="col-12">
+                                <div class="fw-bold" id="LabelTextTwo">Segments</div>
+                                <div>@Html.Raw(recap.Segments)</div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="fw-bold" id="LabelTextTwo">Time Summary</div>
+                                <div>
+                                    Work: @recap.TotalWorkTime hr
+                                    @if (recap.TotalLunchTime > 0)
+                                    {
+                                        <span> | Lunch: @recap.TotalLunchTime hr</span>
+                                    }
+                                    @if (recap.TotalDriveTime > 0)
+                                    {
+                                        <span> | Travel: @recap.TotalDriveTime hr</span>
+                                    }
+                                    @if (recap.TotalSupportTime > 0)
+                                    {
+                                        <span> | Support: @recap.TotalSupportTime hr</span>
+                                    }
+                                    <span> | Recap: @recap.TotalRecapTime hr</span>
+                                    <span> | Total: @recap.TotalTime hr</span>
+                                </div>
+                            </div>
+
+                            @{
+                                var cableParts = new List<string>();
+                                if (recap.Total182 > 0) cableParts.Add($"18/2: {recap.Total182}'");
+                                if (recap.Total184 > 0) cableParts.Add($"18/4: {recap.Total184}'");
+                                if (recap.Total186 > 0) cableParts.Add($"18/6: {recap.Total186}'");
+                                if (recap.TotalCat6 > 0) cableParts.Add($"Cat 6: {recap.TotalCat6}'");
+                                if (recap.TotalFiber > 0) cableParts.Add($"Fiber: {recap.TotalFiber}'");
+                                if (recap.TotalCoax > 0) cableParts.Add($"Coax: {recap.TotalCoax}'");
+                                var cableOutput = string.Join(" | ", cableParts);
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(cableOutput))
+                            {
+                                <div class="col-12">
+                                    <div class="fw-bold" id="LabelTextTwo">Cable Used (feet)</div>
+                                    <div>@cableOutput</div>
+                                </div>
+                            }
+
+                            <div class="col-12 mt-2">
+                                <div class="fw-bold" id="LabelTextTwo">Employees</div>
+                                @foreach (var emp in recap.RecapEmployees ?? new List<string>())
+                                {
+                                    <span class="badge bg-secondary">@emp</span>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (isAdmin)
+                    {
+                        <div class="mt-3">
+                            <form method="post">
+                                <button class="btn btn-danger"
+                                        onclick="return confirm('Are you sure?')"
+                                        asp-page-handler="Delete"
+                                        asp-route-id="@recap.RecapID"
+                                        asp-route-recapType="@(recap.IsHardwareRecap ? "Hardware" : "Standard")">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.TotalCount > 0)
+    {
+        <div class="text-center my-4">
+            <div class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.PageNumber)
+                    {
+                        <span class="page-number active">@i</span>
+                    }
+                    else
+                    {
+                        <a class="page-number"
+                           asp-page="./BrowseRecaps2"
+                           asp-route-pageNumber="@i"
+                           asp-route-pageSize="@Model.PageSize">
+                            @i
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="row my-2">
+        <div class="col-12 text-center">
+            <label class="form-label" id="LabelText">No Recaps yet.</label>
+        </div>
+    </div>
+}

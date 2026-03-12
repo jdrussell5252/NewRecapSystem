@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
@@ -13,16 +12,13 @@ using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages.Recaps
 {
-    [Authorize]
-    public class BrowseRecapsModel : PageModel
+    public class BrowseRecaps2Model : PageModel
     {
-
-
         public List<SelectListItem> EmployeeOptions { get; set; } = new();
         [BindProperty(SupportsGet = true)]
         public List<int> SelectedEmployeeIds { get; set; } = new();
-
-
+        [BindProperty(SupportsGet = true)]
+        public int? SelectedStoreId { get; set; }
         public List<StoreGroup> RecapsByStore { get; set; } = new();
         public List<RecapView> Recaps { get; set; } = new List<RecapView>();
         public bool IsAdmin { get; set; }
@@ -47,11 +43,11 @@ namespace NewRecap.Pages.AdminPages.Recaps
 
 
         public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 5;
+        public int PageSize { get; set; } = 10;
         public int TotalCount { get; set; }
         public int TotalPages => Math.Max(1, (int)Math.Ceiling((double)TotalCount / Math.Max(1, PageSize)));
 
-        public IActionResult OnGet(int pageNumber = 1, int pageSize = 5)
+        public IActionResult OnGet(int pageNumber = 1, int pageSize = 10)
         {
             var redirect = EnforcePasswordChange();
             if (redirect != null)
@@ -77,14 +73,11 @@ namespace NewRecap.Pages.AdminPages.Recaps
             PopulateEmployeeOptions();
 
 
-            // --- Filter by store (if selected) ---
-            if (FilterStoreNumber.HasValue)
+            // --- Filter by store dropdown selections ---
+            if (SelectedStoreId.HasValue)
             {
-                string prefix = $"Store Number: {FilterStoreNumber.Value} |";
-
                 Recaps = Recaps
-                    .Where(r => !string.IsNullOrWhiteSpace(r.RecapStoreLocation) &&
-                                r.RecapStoreLocation.StartsWith(prefix))
+                    .Where(r => r.StoreNumber.HasValue && r.StoreNumber.Value == SelectedStoreId.Value)
                     .ToList();
             }
 
@@ -131,7 +124,7 @@ namespace NewRecap.Pages.AdminPages.Recaps
 
             // === Pagination logic ===
             PageNumber = pageNumber < 1 ? 1 : pageNumber;
-            PageSize = pageSize < 1 ? 5 : pageSize;
+            PageSize = pageSize < 1 ? 10 : pageSize;
 
             TotalCount = Recaps.Count;
 
@@ -231,7 +224,7 @@ namespace NewRecap.Pages.AdminPages.Recaps
                                 Hostname = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
 
                                 RecapStoreLocation = PopulateRecapStoreLocation(recapId),
-
+                                StoreNumber = GetHardwareStoreNumber(recapId),
 
                                 TotalWorkTime = Math.Round(totalWork, 2),
                                 TotalLunchTime = Math.Round(totalLunch, 2),
@@ -302,6 +295,7 @@ namespace NewRecap.Pages.AdminPages.Recaps
                                 WAM = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
                                 Hostname = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
                                 RecapStoreLocation = PopulateRecapStoreLocation(recapId),
+                                StoreNumber = GetHardwareStoreNumber(recapId),
                                 TotalWorkTime = Math.Round(totalWork, 2),
                                 TotalLunchTime = Math.Round(totalLunch, 2),
                                 TotalRecapTime = Math.Round(totalRecap, 2),
@@ -575,6 +569,23 @@ namespace NewRecap.Pages.AdminPages.Recaps
             return employees;
         }// End of 'PopulateHardwareRecapEmployees'.
 
+
+        private int? GetHardwareStoreNumber(int hardwareRecapId)
+        {
+            using var conn = new SqlConnection(AppHelper.GetDBConnectionString());
+            string query = @"
+        SELECT sl.StoreNumber
+        FROM StoreLocations sl
+        INNER JOIN HardwareRecap hr ON sl.StoreLocationID = hr.StoreLocationID
+        WHERE hr.HardwareRecapID = @HardwareRecapID";
+
+            using var cmd = new SqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@HardwareRecapID", hardwareRecapId);
+            conn.Open();
+
+            var result = cmd.ExecuteScalar();
+            return result == null || result == DBNull.Value ? null : (int?)Convert.ToInt32(result);
+        }
         private string PopulateRecapStoreLocation(int recapID)
         {
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
@@ -909,7 +920,6 @@ namespace NewRecap.Pages.AdminPages.Recaps
         private void PopulateStoreOptions()
         {
             StoreOptions = new List<SelectListItem>();
-            var storeNumbers = new List<int>();
 
             using (var conn = new SqlConnection(AppHelper.GetDBConnectionString()))
             {
@@ -930,17 +940,12 @@ namespace NewRecap.Pages.AdminPages.Recaps
                             StoreOptions.Add(new SelectListItem
                             {
                                 Value = storeNumber.ToString(),
-                                Text = storeNumber.ToString()
+                                Text = $"Store Number: {storeNumber}"
                             });
-
-                            storeNumbers.Add(storeNumber);
                         }
                     }
                 }
             }
-
-            // For JS autocomplete on the page
-            StoreJson = System.Text.Json.JsonSerializer.Serialize(storeNumbers);
         }// End of 'PopulateStoreOptions'.
 
         private int GetEffectiveEmployeeCountRecap(int recapID)
@@ -1679,5 +1684,5 @@ namespace NewRecap.Pages.AdminPages.Recaps
             }
         }//End of 'CheckIfUserIsAdmin'.
         /*--------------------ADMIN PRIV----------------------*/
-    }// End of 'BrowseRecaps' Class.
-}// End of 'namespace'.
+    }
+}

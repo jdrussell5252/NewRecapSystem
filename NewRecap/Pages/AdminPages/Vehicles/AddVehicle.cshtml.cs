@@ -33,7 +33,7 @@ namespace NewRecap.Pages.AdminPages.Vehicles
             /*--------------------ADMIN PRIV----------------------*/
         }// End of 'OnGet'.
 
-        public IActionResult OnPost(int id)
+        public IActionResult OnPost()
         {
             var vehicleModel = (NewVehicles.VehicleModel ?? string.Empty).Trim();
             var vehicleNumber = (NewVehicles.VehicleNumber ?? string.Empty).Trim();
