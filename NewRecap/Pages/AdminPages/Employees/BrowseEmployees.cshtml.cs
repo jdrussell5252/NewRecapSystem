@@ -59,7 +59,7 @@ namespace NewRecap.Pages.AdminPages.Employees
             return Page();
         }// End of 'OnGet'.
 
-        public IActionResult OnPostDelete(int id)
+        /*public IActionResult OnPostDelete(int id)
         {
             // delete the book from the database
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
@@ -77,7 +77,7 @@ namespace NewRecap.Pages.AdminPages.Employees
             }
 
             return RedirectToPage();
-        }//End of 'OnPostDelete'.
+        }//End of 'OnPostDelete'.*/
 
         private void PopulateEmployeeList()
         {
