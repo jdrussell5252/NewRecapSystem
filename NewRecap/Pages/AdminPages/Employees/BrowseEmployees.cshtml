@@ -85,7 +85,7 @@
                         <label class="form-label fw-bold d-block employee-label">Employee Is Admin:</label>
                         <div>@LocalEmployee.EmployeeRole</div>
                         <a asp-page="EditEmployeeRole" asp-route-id="@LocalEmployee.EmployeeID" class="btn btn-primary mt-auto">
-                            <i class="bi bi-pencil-square"></i> Edit User Role
+                            <i class="bi bi-pencil-square"></i> Edit Role
                         </a>
                     </div>
                     <!--===================End of Employee Role Box==================-->
@@ -98,7 +98,7 @@
 
                         <a asp-page="EditEmployeeIsActive"
                            asp-route-id="@LocalEmployee.EmployeeID"
-                           class="btn btn-primary btn-sm my-1">
+                           class="btn btn-primary mt-auto">
                             <i class="bi bi-pencil-square"></i> Edit Status
                         </a>
                     </div>
