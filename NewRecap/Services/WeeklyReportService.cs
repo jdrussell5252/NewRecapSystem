@@ -21,6 +21,5 @@ namespace NewRecap.Services
             conn.Open();
             cmd.ExecuteNonQuery();
         }// End of 'GenerateWeeklyReport'.
-
     }// End of 'WeeklyReportService' Class.
 }// End of 'namespace'.

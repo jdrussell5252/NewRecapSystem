@@ -8,7 +8,7 @@
         public WeeklyReportBackgroundService(IServiceScopeFactory scopeFactory)
         {
             _scopeFactory = scopeFactory;
-        }
+        }// End of 'WeeklyReportBackgroundService'.
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -28,7 +28,7 @@
                 // Check once per hour
                 await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
             }
-        }
+        }// End of 'ExecuteAsync'.
 
         private void GenerateWeeklyReports(IServiceScope scope)
         {
@@ -39,7 +39,7 @@
             {
                 weekStart = weekStart.AddDays(-(int)weekStart.DayOfWeek + (int)DayOfWeek.Monday);
             }
-        }
+        }// End of 'GenerateWeeklyReports'.
 
     }// End of 'WeeklyReportBackgroundService' Class.
 }// End of 'namespace'.

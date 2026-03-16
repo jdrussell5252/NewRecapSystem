@@ -145,7 +145,7 @@ namespace NewRecap.Pages.AdminPages.Recaps
             return Page();
         }// End of 'OnGet'.
 
-        /*public IActionResult OnPostDelete(int id, bool isHardware)
+        public IActionResult OnPostDelete(int id, bool isHardware)
         {
             // Set up the connection with the database.
             using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
@@ -164,7 +164,7 @@ namespace NewRecap.Pages.AdminPages.Recaps
 
             }
             return RedirectToPage(); // Redirect to the same page "Browse Recaps".
-        }//End of 'OnPostDelete'.*/
+        }//End of 'OnPostDelete'.
 
         private void PopulateHardwareRecapList(int id)
         {

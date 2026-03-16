@@ -2,7 +2,7 @@
 @model NewRecap.Pages.AdminPages.Vehicles.BrowseVehiclesModel
 @{
 }
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <div class="row text-center">
     <div class="col-12">
         <label class="form-label fs-1" id="LabelText">Browse Vehicles</label>
@@ -26,7 +26,7 @@
 @if (Model.Vehicles.Count != 0)
 {
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-12 col-lg-8">
             @foreach (var LocalLocation in Model.Vehicles)
             {
                 <div class="row my-3 p-4 bg-dark text-white border border-secondary rounded align-items-center text-center">
@@ -41,27 +41,27 @@
                     </div>-->
                     <!--End of Delete Button-->
 
-                    <div class="col-md-4 border-end border-secondary">
+                    <div class="col-12 col-md-4 border-end border-secondary">
                         <!-- left column -->
                         <label class="form-label fw-bold">Vehicle Number:</label>
                         <div>@(LocalLocation.VehicleNumber)</div>
                         <a asp-page="EditVehicleNumber" asp-route-id="@LocalLocation.VehicleID" class="btn btn-primary mt-auto"><i class="bi bi-pencil-square"></i> Edit Number</a>
                     </div>
 
-                    <div class="col-md-4 border-end border-secondary">
+                    <div class="col-12 col-md-4 border-end border-secondary">
                         <!-- Middle column -->
                         <label class="form-label fw-bold">Vehicle Model:</label>
                         <div>@(LocalLocation.VehicleModel ?? "N/A")</div>
                         <a asp-page="EditVehicleModel" asp-route-id="@LocalLocation.VehicleID" class="btn btn-primary mt-auto"><i class="bi bi-pencil-square"></i> Edit Model</a>
                     </div>
 
-                    <div class="col-md-4 ">
+                    <div class="col-12 col-md-4 ">
                         <label class="form-label fw-bold">Vehicle Is Active:</label>
                         <div>@(LocalLocation.IsActive ? "Active" : "Inactive")</div>
 
                         <a asp-page="EditVehicleIsActive"
-                           asp-route-id="@LocalLocation.VehicleID"
-                           class="btn btn-primary mt-auto">
+                            asp-route-id="@LocalLocation.VehicleID"
+                            class="btn btn-primary mt-auto">
                             <i class="bi bi-pencil-square"></i> Edit Status
                         </a>
                     </div>
@@ -94,9 +94,9 @@
                     else
                     {
                         <a class="page-number"
-                           asp-page="./BrowseVehicles"
-                           asp-route-pageNumber="@i"
-                           asp-route-pageSize="@Model.PageSize">@i</a>
+                            asp-page="./BrowseVehicles"
+                            asp-route-pageNumber="@i"
+                            asp-route-pageSize="@Model.PageSize">@i</a>
                     }
                 }
             </div>
