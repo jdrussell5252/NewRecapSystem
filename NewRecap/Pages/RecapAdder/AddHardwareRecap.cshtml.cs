@@ -27,7 +27,6 @@ namespace NewRecap.Pages.RecapAdder
         public string? TrainingEmployeeIds { get; set; }
 
         public bool IsAdmin { get; set; }
-        public string connectionString = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = C:\\Users\\jaker\\OneDrive\\Desktop\\Nacspace\\New Recap\\NewRecapDB\\NewRecapDB.accdb;";
 
         public IActionResult OnGet()
         {
