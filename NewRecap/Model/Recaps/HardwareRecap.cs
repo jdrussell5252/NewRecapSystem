@@ -14,7 +14,8 @@ namespace NewRecap.Model.Recaps
 
         public DateTime? RecapDate { get; set; }
         [Required(ErrorMessage = "Workorder Number is required.")]
-        public int? RecapWorkorderNumber { get; set; }
+        public int RecapWorkorderNumber { get; set; }
+        public int RecapTicketNumber { get; set; }
         public int? RecapAssetNumber { get; set; }
         public string? RecapSerialNumber { get; set; }
         public int? StoreNumber { get; set; }

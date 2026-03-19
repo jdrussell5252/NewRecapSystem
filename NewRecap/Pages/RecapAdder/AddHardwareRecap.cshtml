@@ -42,6 +42,18 @@
     </div>
     <!--Workorder Textbox-->
 
+    <!--Ticket Number Textbox-->
+    <div class="row my-2">
+        <div class="col-12">
+            <label asp-for="NewRecap.RecapTicketNumber" class="form-label" id="LabelText">Ticket Number:</label>
+        </div>
+        <div class="col-12">
+            <input asp-for="NewRecap.RecapTicketNumber" type="number" class="form-control" />
+            <span asp-validation-for="NewRecap.RecapTicketNumber" class="text-danger"></span>
+        </div>
+    </div>
+    <!--Ticket Number Textbox-->
+
     <!--Store Location DropDown-->
     <div class="col-6 mt-2">
         <label asp-for="SelectedStoreLocationID" class="form-label" id="LabelText">Store Location:</label>
@@ -336,6 +348,18 @@
         <span asp-validation-for="NewRecap.WAM" class="text-danger"></span>
     </div>
     <!--End of WAM Textbox-->
+
+    <!--Cross Checked By Dropdown-->
+    <div class="col-6 mt-2">
+        <label asp-for="SelectedCrossCheckEmployeeId" class="form-label" id="LabelText">Cross Checked By:</label>
+    </div>
+    <div class="col-12">
+        <select asp-for="SelectedCrossCheckEmployeeId" asp-items="Model.EmployeeOptions" class="form-select">
+            <option value="0">---Select Employee---</option>
+        </select>
+        <span asp-validation-for="SelectedCrossCheckEmployeeId" class="text-danger"></span>
+    </div>
+    <!--Cross Checked By Dropdown-->
 
     <script>
         // Start at current count so indexes continue correctly

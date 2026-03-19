@@ -22,6 +22,7 @@ namespace NewRecap.Pages.RecapAdder
         public List<SelectListItem> Locations { get; set; } = new List<SelectListItem>();
         public int SelectedStoreLocationID { get; set; }
         public List<int> SelectedEmployeeIds { get; set; } = new();
+        public int SelectedCrossCheckEmployeeId { get; set; }
         public List<SelectListItem> EmployeeOptions { get; set; } = new();
         public string? TrainingEmployeeIds { get; set; }
 
@@ -47,6 +48,14 @@ namespace NewRecap.Pages.RecapAdder
 
             PopulateEmployeeOptions();
             PopulateLocationList();
+
+            if(string.IsNullOrWhiteSpace(NewRecap?.RecapDescription))
+            {
+                NewRecap ??= new HardwareRecap();
+
+                NewRecap.RecapDescription = "What did you do?\n\nWhat do you have left to do?";
+            }
+
             return Page();
         }// End of 'OnGet'.
 
@@ -60,6 +69,16 @@ namespace NewRecap.Pages.RecapAdder
             if (SelectedStoreLocationID <= 0)
             {
                 ModelState.AddModelError("SelectedStoreLocationID", "Please select a store location.");
+            }
+
+            if (NewRecap.RecapTicketNumber <= 0)
+            {
+                ModelState.AddModelError("NewRecap.RecapTicketNumber", "Please Enter a ticket number.");
+            }
+
+            if (NewRecap.RecapWorkorderNumber <= 0)
+            {
+                ModelState.AddModelError("NewRecap.RecapWorkorderNumber", "Please Enter a Workorder number.");
             }
 
             /*-----------------------------------------------------*/
@@ -279,6 +298,11 @@ namespace NewRecap.Pages.RecapAdder
                 ModelState.AddModelError("NewRecap.WAM", "WAM must be at most 50 characters.");
             }
 
+            if (SelectedCrossCheckEmployeeId <= 0)
+            {
+                ModelState.AddModelError("SelectedCrossCheckEmployeeId", "Please select at least one employee.");
+            }
+
             if (ModelState.IsValid)
             {
                 int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -286,7 +310,7 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    string cmdTextRecap = "INSERT INTO HardwareRecap (HardwareRecapWorkorderNumber, HardwareRecapDate, HardwareRecapDescription, HardwareRecapAssetNumber, HardwareRecapSerialNumber, StoreLocationID, HardwareRecapIP, HardwareRecapWAM, HardwareRecapHostname) VALUES (@RecapWorkorderNumber, @RecapDate, @RecapDescription, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID, @IP, @WAM, @Hostname);";
+                    string cmdTextRecap = "INSERT INTO HardwareRecap (HardwareRecapWorkorderNumber, HardwareRecapDate, HardwareRecapDescription, HardwareRecapAssetNumber, HardwareRecapSerialNumber, StoreLocationID, HardwareRecapIP, HardwareRecapWAM, HardwareRecapHostname, HardwareRecapTicketNumber, HardwareRecapCrossCheckedBy) VALUES (@RecapWorkorderNumber, @RecapDate, @RecapDescription, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID, @IP, @WAM, @Hostname, @TicketNumber, @CrossCheckedBy);";
                     SqlCommand cmdRecap = new SqlCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
                     cmdRecap.Parameters.AddWithValue("@RecapDate", DateTime.Today);
@@ -298,7 +322,8 @@ namespace NewRecap.Pages.RecapAdder
                     cmdRecap.Parameters.AddWithValue("@IP", string.IsNullOrWhiteSpace(NewRecap.IP) ? DBNull.Value : NewRecap.IP);
                     cmdRecap.Parameters.AddWithValue("@WAM", string.IsNullOrWhiteSpace(NewRecap.WAM) ? DBNull.Value : NewRecap.WAM);
                     cmdRecap.Parameters.AddWithValue("@Hostname", string.IsNullOrWhiteSpace(NewRecap.Hostname) ? DBNull.Value : NewRecap.Hostname);
-
+                    cmdRecap.Parameters.AddWithValue("@TicketNumber", NewRecap.RecapTicketNumber);
+                    cmdRecap.Parameters.AddWithValue("@CrossCheckedBy", SelectedCrossCheckEmployeeId);
                     cmdRecap.ExecuteNonQuery();
 
                     int HardwareRecapID;
@@ -398,10 +423,11 @@ namespace NewRecap.Pages.RecapAdder
                     }
                 }
 
-                var storeNumber = getStoreNumberById(SelectedStoreLocationID);
+                var customer = getStoreNumberById(SelectedStoreLocationID);
+                var location = GetStoreCity(SelectedStoreLocationID);
                 var to = "ClientRecaps@outlook.com";
-                var subject = $"Recap | WO#: {NewRecap.RecapWorkorderNumber} | Customer: {storeNumber} | Date: {DateTime.Today:MM/dd/yyyy}";
-                var bodyText = BuildRecapEmailBodyText(NewRecap, storeNumber, SelectedEmployeeIds);
+                var subject = $"Recap | WO#: {NewRecap.RecapWorkorderNumber} | Customer: {customer} | Location: {location} | Date: {DateTime.Today:MM/dd/yyyy}";
+                var bodyText = BuildRecapEmailBodyText(NewRecap, customer, location, SelectedEmployeeIds);
 
 
                 string msOutlookUrl =
@@ -457,12 +483,14 @@ namespace NewRecap.Pages.RecapAdder
         }// End of 'ShowOutlookCompose'.
 
 
-        private string BuildRecapEmailBodyText(HardwareRecap recap, string storelocation, List<int> employeeIds)
+        private string BuildRecapEmailBodyText(HardwareRecap recap, string customer, string location, List<int> employeeIds)
         {
             //var nl = Environment.NewLine;
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"Workorder: {recap.RecapWorkorderNumber}");
-            sb.AppendLine($"Store Location: {storelocation}");
+            sb.AppendLine($"Ticket Number: {recap.RecapTicketNumber}");
+            sb.AppendLine($"Customer: {customer}");
+            sb.AppendLine($"Store Location: {location}");
             sb.AppendLine($"Date: {DateTime.Today:MM/dd/yyyy}");
             int recapId = recap.RecapID;
             sb.Append("Technician(s): ");
@@ -531,7 +559,7 @@ namespace NewRecap.Pages.RecapAdder
 
                 sb.AppendLine();
 
-                sb.AppendLine($"Job Description: {recap.RecapDescription}");
+                sb.AppendLine($"Job Description:\n{recap.RecapDescription}");
 
                 sb.AppendLine();
 
@@ -539,6 +567,8 @@ namespace NewRecap.Pages.RecapAdder
                 sb.AppendLine($"IP: {recap.IP}");
                 sb.AppendLine($"WAM: {recap.WAM}");
                 sb.AppendLine($"Asset #: {recap.RecapAssetNumber}");
+                var crossCheckedName = GetEmployeeNameById(SelectedCrossCheckEmployeeId);
+                sb.AppendLine($"Cross Checked By: {crossCheckedName}");
 
             }
             // Keep it concise to avoid URI length limits.
@@ -568,6 +598,53 @@ namespace NewRecap.Pages.RecapAdder
                 }
             }
         }//End of 'PopulateLocationList'.
+
+        private string GetEmployeeNameById(int employeeId)
+        {
+            using var conn = new SqlConnection(AppHelper.GetDBConnectionString());
+            string sql = @"
+        SELECT EmployeeFName, EmployeeLName
+        FROM Employee
+        WHERE EmployeeID = @EmployeeID";
+
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@EmployeeID", employeeId);
+
+            conn.Open();
+            using var reader = cmd.ExecuteReader();
+
+            if (reader.Read())
+            {
+                string fName = reader.IsDBNull(0) ? "" : reader.GetString(0);
+                string lName = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                return $"{fName} {lName}".Trim();
+            }
+
+            return "";
+        }
+
+        private string GetStoreCity(int? storeLocationId)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = @"
+            SELECT StoreCity
+            FROM StoreLocations
+            WHERE StoreLocationID = @StoreLocationID";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@StoreLocationID", storeLocationId.Value);
+                    conn.Open();
+
+                    var result = cmd.ExecuteScalar();
+
+                    return result == null || result == DBNull.Value
+                        ? ""
+                        : result.ToString() ?? "";
+                }
+            }
+        }
 
         private decimal GetWorkTimeBase(int recapId)
         {

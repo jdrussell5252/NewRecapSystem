@@ -178,6 +178,11 @@
                             </div>
 
                             <div class="col-12 col-md-6">
+                                <div class="fw-bold" id="LabelTextTwo">Ticket Number</div>
+                                <div>@recap.RecapTicketNumber</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
                                 <div class="fw-bold" id="LabelTextTwo">Recap Date</div>
                                 <div>@recap.RecapDate.ToString("MM/dd/yyyy")</div>
                             </div>
@@ -249,6 +254,11 @@
                                     <div>@recap.RecapSerialNumber</div>
                                 </div>
                             }
+
+                            <div class="col-12 col-md-6">
+                                <div class="fw-bold" id="LabelTextTwo">Cross Checked By</div>
+                                <div>@recap.CrossCheckedBy</div>
+                            </div>
 
                             <div class="col-12 mt-2">
                                 <div class="fw-bold" id="LabelTextTwo">Employees</div>
@@ -370,7 +380,7 @@
 
                     @if (isAdmin)
                     {
-                        <div class="mt-3">
+                        <!--<div class="mt-3">
                             <form method="post">
                                 <button class="btn btn-danger"
                                         onclick="return confirm('Are you sure?')"
@@ -380,7 +390,7 @@
                                     Delete
                                 </button>
                             </form>
-                        </div>
+                        </div>-->
                     }
                 </div>
             </div>

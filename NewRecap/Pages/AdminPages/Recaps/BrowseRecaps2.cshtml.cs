@@ -182,7 +182,9 @@ namespace NewRecap.Pages.AdminPages.Recaps
                       HardwareRecapSerialNumber,
                       HardwareRecapIP,
                       HardwareRecapWAM,
-                      HardwareRecapHostname
+                      HardwareRecapHostname,
+                      HardwareRecapTicketNumber,
+                      HardwareRecapCrossCheckedBy
                     FROM HardwareRecap
                     ORDER BY HardwareRecapDate DESC;";
 
@@ -222,6 +224,8 @@ namespace NewRecap.Pages.AdminPages.Recaps
                                 IP = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
                                 WAM = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
                                 Hostname = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                                RecapTicketNumber = reader.GetInt32(9),
+                                CrossCheckedBy = GetEmployeeNameById(reader.GetInt32(10)),
 
                                 RecapStoreLocation = PopulateRecapStoreLocation(recapId),
                                 StoreNumber = GetHardwareStoreNumber(recapId),
@@ -1056,6 +1060,34 @@ namespace NewRecap.Pages.AdminPages.Recaps
             return billableCount;
         }// End of 'GetEffectiveEmployeeCountHardwareRecap'.
 
+        private string GetEmployeeNameById(int employeeId)
+        {
+            using (SqlConnection conn = new SqlConnection(AppHelper.GetDBConnectionString()))
+            {
+                string sql = @"
+                    SELECT EmployeeFName, EmployeeLName
+                    FROM Employee
+                    WHERE EmployeeID = @EmployeeID";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@EmployeeID", employeeId);
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string fName = reader.GetString(0);
+                            string lName = reader.GetString(1);
+                            return $"{fName} {lName}".Trim();
+                        }
+                    }
+                }
+            }
+
+            return "";
+        }
 
         private void PopulateEmployeeOptions()
         {

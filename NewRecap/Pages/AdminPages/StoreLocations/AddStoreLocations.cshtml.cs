@@ -67,11 +67,12 @@ namespace NewRecap.Pages.AdminPages.StoreLocations
                 {
 
                     conn.Open();
-                    string insertcmdText = "INSERT INTO StoreLocations (StoreNumber, StoreState, StoreCity) VALUES (@StoreNumber, @StoreState, @StoreCity);";
+                    string insertcmdText = "INSERT INTO StoreLocations (StoreNumber, StoreState, StoreCity, IsActive) VALUES (@StoreNumber, @StoreState, @StoreCity, @IsActive);";
                     SqlCommand insertcmd = new SqlCommand(insertcmdText, conn);
                     insertcmd.Parameters.AddWithValue("@StoreNumber", NewLocation.StoreNumber);
                     insertcmd.Parameters.AddWithValue("@StoreState", NewLocation.StoreState);
                     insertcmd.Parameters.AddWithValue("@StoreCity", NewLocation.StoreCity);
+                    insertcmd.Parameters.AddWithValue("@IsActive", true);
 
                     insertcmd.ExecuteNonQuery();
                 }
