@@ -48,7 +48,7 @@
             <label asp-for="NewRecap.RecapTicketNumber" class="form-label" id="LabelText">Ticket Number:</label>
         </div>
         <div class="col-12">
-            <input asp-for="NewRecap.RecapTicketNumber" type="number" class="form-control" />
+            <input asp-for="NewRecap.RecapTicketNumber" type="text" class="form-control" />
             <span asp-validation-for="NewRecap.RecapTicketNumber" class="text-danger"></span>
         </div>
     </div>
@@ -66,15 +66,25 @@
     </div>
     <!--End of Store Location DropDown-->
 
-    <!--Recap Description Textbox-->
+    <!--RecapWDYD Textbox-->
     <div class="col-4">
-        <label asp-for="NewRecap.RecapDescription" class="form-label" id="LabelText">Recap Description:</label>
+        <label asp-for="NewRecap.RecapWDYD" class="form-label" id="LabelText">What did you do?</label>
     </div>
     <div class="col-12">
-        <textarea asp-for="NewRecap.RecapDescription" type="text" class="form-control" rows="5"></textarea>
-        <span asp-validation-for="NewRecap.RecapDescription" class="text-danger"></span>
+        <textarea asp-for="NewRecap.RecapWDYD" type="text" class="form-control" rows="5"></textarea>
+        <span asp-validation-for="NewRecap.RecapWDYD" class="text-danger"></span>
     </div>
-    <!--End of Recap Description Textbox-->
+    <!--End of RecapWDYD Textbox-->
+    
+    <!--RecapWLTD Textbox-->
+    <div class="col-4">
+        <label asp-for="NewRecap.RecapWLTD" class="form-label" id="LabelText">What do you have left to do?</label>
+    </div>
+    <div class="col-12">
+        <textarea asp-for="NewRecap.RecapWLTD" type="text" class="form-control" rows="5"></textarea>
+        <span asp-validation-for="NewRecap.RecapWLTD" class="text-danger"></span>
+    </div>
+    <!--End of RecapWLTD Textbox-->
 
     <!-- Work Segments -->
     <div class="col-6 mt-2">
@@ -221,7 +231,7 @@
                     <label class="form-label">Work Start:</label>
                     <div class="d-flex flex-column gap-2">
                         <!--------------------------------Work Start Date input---------------------------------->
-                        <input name="NewRecap.WorkSegments[__INDEX__].WorkStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].WorkStartDate" type="date" class="form-control" min="2026-01-01" max="2026-12-31" />
                         <!--------------------------------Work Start Time input---------------------------------->
                         <input name="NewRecap.WorkSegments[__INDEX__].WorkStart" type="time" class="form-control" />
                     </div>
@@ -230,7 +240,7 @@
                     <label class="form-label">Work End:</label>
                     <div class="d-flex flex-column gap-2">
                         <!--------------------------------Work End Date input---------------------------------->
-                        <input name="NewRecap.WorkSegments[__INDEX__].WorkEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.WorkSegments[__INDEX__].WorkEndDate" type="date" class="form-control" min="2026-01-01" max="2026-12-31" />
                         <!--------------------------------Work End Time input---------------------------------->
                         <input name="NewRecap.WorkSegments[__INDEX__].WorkEnd" type="time" class="form-control" />
                     </div>
@@ -250,7 +260,7 @@
                 <div class="col-12">
                     <label class="form-label">Lunch Start:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.LunchSegments[__INDEX__].LunchStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.LunchSegments[__INDEX__].LunchStartDate" type="date" class="form-control" min="2026-01-01" max="2026-12-31" />
                         <input name="NewRecap.LunchSegments[__INDEX__].LunchStart" type="time" class="form-control" />
 
                     </div>
@@ -258,7 +268,7 @@
                 <div class="col-12">
                     <label class="form-label">Lunch End:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.LunchSegments[__INDEX__].LunchEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.LunchSegments[__INDEX__].LunchEndDate" type="date" class="form-control" min="2026-01-01" max="2026-12-31" />
                         <input name="NewRecap.LunchSegments[__INDEX__].LunchEnd" type="time" class="form-control" />
 
                     </div>
@@ -278,7 +288,7 @@
                 <div class="col-12">
                     <label class="form-label">Recap Start:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.RecapSegments[__INDEX__].RecapStartDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.RecapSegments[__INDEX__].RecapStartDate" type="date" class="form-control" min="2026-01-01" max="2026-12-31" />
                         <input name="NewRecap.RecapSegments[__INDEX__].RecapStart" type="time" class="form-control" />
 
                     </div>
@@ -286,7 +296,7 @@
                 <div class="col-12">
                     <label class="form-label">Recap End:</label>
                     <div class="d-flex flex-column gap-2">
-                        <input name="NewRecap.RecapSegments[__INDEX__].RecapEndDate" type="date" class="form-control" min="2025-01-01" max="2025-12-31" />
+                        <input name="NewRecap.RecapSegments[__INDEX__].RecapEndDate" type="date" class="form-control" min="2026-01-01" max="2026-12-31" />
                         <input name="NewRecap.RecapSegments[__INDEX__].RecapEnd" type="time" class="form-control" />
 
                     </div>

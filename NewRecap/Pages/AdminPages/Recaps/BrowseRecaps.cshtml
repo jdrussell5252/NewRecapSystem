@@ -1,5 +1,5 @@
 ﻿@page
-@model NewRecap.Pages.AdminPages.Recaps.BrowseRecaps2Model
+@model NewRecap.Pages.AdminPages.Recaps.BrowseRecapsModel
 @{
     var isAdmin = ViewData["IsAdmin"] != null && (bool)ViewData["IsAdmin"];
 }
@@ -60,13 +60,13 @@
     </div>
 
     <form method="get" class="row g-2 align-items-end">
-        
+
         <div class="col-12 col-md-6">
             <label class="form-label" id="LabelText" asp-for="FilterWorkorderNumber">Workorder Number</label>
             <input asp-for="FilterWorkorderNumber"
-                    type="number"
-                    class="form-control form-control-sm"
-                    placeholder="e.g. 123" />
+                   type="number"
+                   class="form-control form-control-sm"
+                   placeholder="e.g. 123" />
         </div>
 
         <div class="col-12 col-md-6">
@@ -76,7 +76,7 @@
                     class="form-select form-select-sm js-store-choices">
             </select>
         </div>
-        
+
 
         <div class="col-12 col-md-6">
             <label class="form-label" id="LabelText" asp-for="FilterDate">Date:</label>

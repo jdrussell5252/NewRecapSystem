@@ -5,7 +5,6 @@ using Microsoft.Data.SqlClient;
 using NewRecap.Model.CableSegments;
 using NewRecap.Model.Recaps;
 using NewRecap.Model.StoreLocations;
-using NewRecap.Model.TimeSegments;
 using NewRecap.MyAppHelper;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
@@ -13,7 +12,7 @@ using System.Security.Claims;
 
 namespace NewRecap.Pages.AdminPages.Recaps
 {
-    public class BrowseRecaps2Model : PageModel
+    public class BrowseRecapsModel : PageModel
     {
         public List<SelectListItem> EmployeeOptions { get; set; } = new();
         [BindProperty(SupportsGet = true)]

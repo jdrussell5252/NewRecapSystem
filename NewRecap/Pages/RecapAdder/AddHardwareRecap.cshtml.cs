@@ -48,13 +48,6 @@ namespace NewRecap.Pages.RecapAdder
             PopulateEmployeeOptions();
             PopulateLocationList();
 
-            if(string.IsNullOrWhiteSpace(NewRecap?.RecapDescription))
-            {
-                NewRecap ??= new HardwareRecap();
-
-                NewRecap.RecapDescription = "What did you do?\n\nWhat do you have left to do?";
-            }
-
             return Page();
         }// End of 'OnGet'.
 
@@ -70,14 +63,14 @@ namespace NewRecap.Pages.RecapAdder
                 ModelState.AddModelError("SelectedStoreLocationID", "Please select a store location.");
             }
 
-            if (NewRecap.RecapTicketNumber <= 0)
+            /*if (string.IsNullOrEmpty(NewRecap.RecapTicketNumber))
             {
                 ModelState.AddModelError("NewRecap.RecapTicketNumber", "Please Enter a ticket number.");
-            }
+            }*/
 
             if (NewRecap.RecapWorkorderNumber <= 0)
             {
-                ModelState.AddModelError("NewRecap.RecapWorkorderNumber", "Please Enter a Workorder number.");
+                ModelState.AddModelError("NewRecap.RecapWorkorderNumber", "Please Enter a valid Workorder number.");
             }
 
             /*-----------------------------------------------------*/
@@ -261,20 +254,27 @@ namespace NewRecap.Pages.RecapAdder
                 }
             }
 
-            var description = (NewRecap.RecapDescription ?? string.Empty).Trim();
+            var ticketNumber = (NewRecap.RecapTicketNumber ?? string.Empty).Trim();
+            var WDYD = (NewRecap.RecapWDYD ?? string.Empty).Trim();
+            var WLTD = (NewRecap.RecapWLTD ?? string.Empty).Trim();
             var serial = (NewRecap.RecapSerialNumber ?? string.Empty).Trim();
             var hostname = (NewRecap.Hostname ?? string.Empty).Trim();
             var ip = (NewRecap.IP ?? string.Empty).Trim();
             var wam = (NewRecap.WAM ?? string.Empty).Trim();
-            const int dbMaxDesc = 500;
+            const int dbMaxWDYD = 2500;
             const int dbMaxSerial = 30;
             const int dbMaxHost = 50;
-            const int dbMaxIP = 12;
+            const int dbMaxIP = 15;
             const int dbMaxWAM = 50;
 
-            if (description.Length > dbMaxDesc)
+            if (WDYD.Length > dbMaxWDYD)
             {
-                ModelState.AddModelError("NewRecap.RecapDescription", "Description must be at most 500 characters.");
+                ModelState.AddModelError("NewRecap.RecapWDYD", "What did you do must be at most 2,500 characters.");
+            }
+
+            if (WLTD.Length > dbMaxWDYD)
+            {
+                ModelState.AddModelError("NewRecap.RecapWLTD", "What do you have left to do must be at most 2,500 characters.");
             }
 
             if (serial.Length > dbMaxSerial)
@@ -309,11 +309,12 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    string cmdTextRecap = "INSERT INTO HardwareRecap (HardwareRecapWorkorderNumber, HardwareRecapDate, HardwareRecapDescription, HardwareRecapAssetNumber, HardwareRecapSerialNumber, StoreLocationID, HardwareRecapIP, HardwareRecapWAM, HardwareRecapHostname, HardwareRecapTicketNumber, HardwareRecapCrossCheckedBy) VALUES (@RecapWorkorderNumber, @RecapDate, @RecapDescription, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID, @IP, @WAM, @Hostname, @TicketNumber, @CrossCheckedBy);";
+                    string cmdTextRecap = "INSERT INTO HardwareRecap (HardwareRecapWorkorderNumber, HardwareRecapDate, HardwareRecapWDYD, HardwareRecapWLTD, HardwareRecapAssetNumber, HardwareRecapSerialNumber, StoreLocationID, HardwareRecapIP, HardwareRecapWAM, HardwareRecapHostname, HardwareRecapTicketNumber, HardwareRecapCrossCheckedBy) VALUES (@RecapWorkorderNumber, @RecapDate, @RecapWDYD, @RecapWLTD, @RecapAssetNumber, @RecapSerialNumber, @StoreLocationID, @IP, @WAM, @Hostname, @TicketNumber, @CrossCheckedBy);";
                     SqlCommand cmdRecap = new SqlCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
                     cmdRecap.Parameters.AddWithValue("@RecapDate", DateTime.Today);
-                    cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
+                    cmdRecap.Parameters.AddWithValue("@RecapWDYD", NewRecap.RecapWDYD);
+                    cmdRecap.Parameters.AddWithValue("@RecapWLTD", NewRecap.RecapWLTD);
                     var pAsset = cmdRecap.Parameters.Add("@RecapAssetNumber", SqlDbType.Int);
                     pAsset.Value = NewRecap.RecapAssetNumber.HasValue ? NewRecap.RecapAssetNumber.Value : DBNull.Value;
                     cmdRecap.Parameters.AddWithValue("@RecapSerialNumber", string.IsNullOrWhiteSpace(NewRecap.RecapSerialNumber) ? DBNull.Value : NewRecap.RecapSerialNumber);
@@ -558,7 +559,9 @@ namespace NewRecap.Pages.RecapAdder
 
                 sb.AppendLine();
 
-                sb.AppendLine($"Job Description:\n{recap.RecapDescription}");
+                sb.AppendLine($"Job Description:");
+                sb.AppendLine($"What did you do?:\n{recap.RecapWDYD}");
+                sb.AppendLine($"What do you have left to do?:\n{recap.RecapWLTD}");
 
                 sb.AppendLine();
 

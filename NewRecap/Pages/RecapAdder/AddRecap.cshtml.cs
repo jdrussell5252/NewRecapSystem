@@ -376,17 +376,41 @@ namespace NewRecap.Pages.RecapAdder
                 }
             }
 
-            var description = (NewRecap.RecapDescription ?? string.Empty).Trim();
+            var recapWDYD = (NewRecap.RecapWDYD ?? string.Empty).Trim();
+            var recapWLTD = (NewRecap.RecapWLTD ?? string.Empty).Trim();
+            var RecapCredsSetUsed = (NewRecap.RecapCredsSetUsed ?? string.Empty).Trim();
+            var RecapInventoryUsed = (NewRecap.RecapInventoryUsed ?? string.Empty).Trim();
+            var RecapInventoryLeft = (NewRecap.RecapInventoryLeft ?? string.Empty).Trim();
             var state = (NewRecap.RecapState ?? string.Empty).Trim();
             var city = (NewRecap.RecapCity ?? string.Empty).Trim();
-            const int dbMaxDesc = 500;
+            const int dbMaxDesc = 2500;
             const int dbMaxState = 2;
             const int dbMaxCity = 50;
 
 
-            if (description.Length > dbMaxDesc)
+            if (recapWDYD.Length > dbMaxDesc)
             {
-                ModelState.AddModelError("NewRecap.RecapDescription", "Description must be at most 500 characters.");
+                ModelState.AddModelError("NewRecap.RecapWDYD", "What did you do must be at most 2,500 characters.");
+            }
+
+            if (recapWLTD.Length > dbMaxDesc)
+            {
+                ModelState.AddModelError("NewRecap.RecapWLTD", "What do you have left to do must be at most 2,500 characters.");
+            }
+
+            if (RecapCredsSetUsed.Length > dbMaxDesc)
+            {
+                ModelState.AddModelError("NewRecap.RecapCredsSetUsed", "Credentials Set/Used textbox must be at most 2,500 characters.");
+            }
+
+            if (RecapInventoryUsed.Length > dbMaxDesc)
+            {
+                ModelState.AddModelError("NewRecap.RecapInventoryUsed", "Inventory material textbox must be at most 2,500 characters.");
+            }
+
+            if (RecapInventoryLeft.Length > dbMaxDesc)
+            {
+                ModelState.AddModelError("NewRecap.RecapInventoryLeft", "Materials brought back textbox must be at most 2,500 characters.");
             }
 
             if (state.Length > dbMaxState)
@@ -399,6 +423,11 @@ namespace NewRecap.Pages.RecapAdder
                 ModelState.AddModelError("NewRecap.RecapCity", "City must be at most 50 characters.");
             }
 
+            if (NewRecap.RecapWorkorderNumber <= 0)
+            {
+                ModelState.AddModelError("NewRecap.RecapWorkorderNumber", "Please Enter a valid Workorder number.");
+            }
+
             if (ModelState.IsValid)
             {
                 int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
@@ -406,7 +435,7 @@ namespace NewRecap.Pages.RecapAdder
                 {
                     conn.Open();
 
-                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, VehicleID, RecapDescription, RecapState, RecapCity, StartingMileage, EndingMileage, Customer) VALUES (@RecapWorkorderNumber, @RecapDate, @VehicleID, @RecapDescription, @RecapState, @RecapCity, @StartingMileage, @EndingMileage, @Customer);";
+                    string cmdTextRecap = "INSERT INTO Recap (RecapWorkorderNumber, RecapDate, VehicleID, RecapWDYD, RecapWLTD, RecapState, RecapCity, StartingMileage, EndingMileage, Customer, RecapCredsSetUsed, RecapInventoryUsed, RecapInventoryLeft) VALUES (@RecapWorkorderNumber, @RecapDate, @VehicleID, @RecapWDYD, @RecapWLTD, @RecapState, @RecapCity, @StartingMileage, @EndingMileage, @Customer, @RecapCredsSetUsed, @RecapInventoryUsed, @RecapInventoryLeft);";
                     SqlCommand cmdRecap = new SqlCommand(cmdTextRecap, conn);
                     cmdRecap.Parameters.AddWithValue("@RecapWorkorderNumber", NewRecap.RecapWorkorderNumber);
                     cmdRecap.Parameters.AddWithValue("@RecapDate", DateTime.Today);
@@ -414,7 +443,8 @@ namespace NewRecap.Pages.RecapAdder
                     var pv = cmdRecap.Parameters.Add("@VehicleID", SqlDbType.Int);
                     pv.Value = SelectedVehicleID.HasValue ? SelectedVehicleID.Value : DBNull.Value;
 
-                    cmdRecap.Parameters.AddWithValue("@RecapDescription", NewRecap.RecapDescription);
+                    cmdRecap.Parameters.AddWithValue("@RecapWDYD", NewRecap.RecapWDYD);
+                    cmdRecap.Parameters.AddWithValue("@RecapWLTD", NewRecap.RecapWLTD);
                     cmdRecap.Parameters.AddWithValue("@RecapState", NewRecap.RecapState);
                     cmdRecap.Parameters.AddWithValue("@RecapCity", NewRecap.RecapCity);
                     var pSMileage = cmdRecap.Parameters.Add("@StartingMileage", SqlDbType.Int);
@@ -424,7 +454,9 @@ namespace NewRecap.Pages.RecapAdder
                     pSEnding.Value = NewRecap.EndingMileage.HasValue ? NewRecap.EndingMileage.Value : DBNull.Value;
 
                     cmdRecap.Parameters.AddWithValue("@Customer", NewRecap.Customer);
-
+                    cmdRecap.Parameters.AddWithValue("@RecapCredsSetUsed", NewRecap.RecapCredsSetUsed);
+                    cmdRecap.Parameters.AddWithValue("@RecapInventoryUsed", NewRecap.RecapInventoryUsed);
+                    cmdRecap.Parameters.AddWithValue("@RecapInventoryLeft", NewRecap.RecapInventoryLeft);
 
                     cmdRecap.ExecuteNonQuery();
 
@@ -705,7 +737,7 @@ namespace NewRecap.Pages.RecapAdder
                     }
                     /* ============================End of Coax===================================== */
                 }
-                return RedirectToPage("/AdminPages/BrowseRecaps");
+                return RedirectToPage("/AdminPages/Recaps/BrowseRecaps");
             }
             else
             {

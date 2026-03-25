@@ -6,6 +6,9 @@ for details on configuring this project to bundle and minify static web assets. 
     margin: 5px;
 }
 
+.no-underline {
+    text-decoration: none;
+}
 
 .nav-item:hover {
     background-color: #8c8a8a;
@@ -52,14 +55,14 @@ for details on configuring this project to bundle and minify static web assets. 
     justify-content: center;
 }
 
-    .footer-section:nth-child(1),
-    .footer-section:nth-child(2) {
-        border-right: 2px solid white;
-    }
+.footer-section:nth-child(1),
+.footer-section:nth-child(2) {
+border-right: 2px solid white;
+}
 
-    .footer-section:nth-child(3) {
-        border-right: none;
-    }
+.footer-section:nth-child(3) {
+border-right: none;
+}
 
 /* Style for social icons */
 .social-icons i {
@@ -67,4 +70,3 @@ for details on configuring this project to bundle and minify static web assets. 
     margin: 0 10px;
 }
 /*----------------------------------------End of Footer--------------------------------------------------*/
-

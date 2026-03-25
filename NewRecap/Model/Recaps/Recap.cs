@@ -17,15 +17,19 @@ namespace NewRecap.Model.Recaps
         [Required(ErrorMessage = "Recap State is required.")]
         public string? RecapState { get; set; }
         public int? VehicleID { get; set; }
-        [Required(ErrorMessage = "Recap Description is required.")]
-        public string RecapDescription { get; set; }
-
+        [Required(ErrorMessage = "What did you do is required.")]
+        public string RecapWDYD { get; set; }
+        [Required(ErrorMessage = "What do you have left to do is required.")]
+        public string RecapWLTD { get; set; }
         public DateTime? RecapDate { get; set; }
         [Required(ErrorMessage = "Workorder Number is required.")]
         public int? RecapWorkorderNumber { get; set; }
 
         public int? StartingMileage { get; set; }
         public int? EndingMileage { get; set; }
+        public string? RecapCredsSetUsed { get; set; }
+        public string? RecapInventoryUsed { get; set; }
+        public string? RecapInventoryLeft { get; set; }
 
         [Required(ErrorMessage = "Recap Customer is required.")]
         public string? Customer { get; set; }

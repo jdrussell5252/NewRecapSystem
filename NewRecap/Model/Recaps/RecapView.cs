@@ -6,7 +6,7 @@ namespace NewRecap.Model.Recaps
     {
         public int RecapID { get; set; }
         public int RecapWorkorderNumber { get; set; }
-        public int RecapTicketNumber { get; set; }
+        public string RecapTicketNumber { get; set; }
         public DateTime RecapDate { get; set; }
         public List<string> EmployeeName { get; set; } = new List<string>();
         public decimal TotalWorkTime { get; set; }
@@ -17,7 +17,8 @@ namespace NewRecap.Model.Recaps
         public decimal TotalRecapTime { get; set; }
         public string? RecapState { get; set; }
         public string? RecapCity { get; set; }
-        public string? RecapDescription { get; set; }
+        public string? RecapWDYD { get; set; }
+        public string? RecapWLTD { get; set; }
         public List<string> RecapEmployees { get; set; } = new List<string>();
         public string? RecapVehicle { get; set; }
         public int? StoreLocationID { get; set; }
@@ -36,6 +37,9 @@ namespace NewRecap.Model.Recaps
         public string? WAM { get; set; }
         public string? Hostname { get; set; }
         public string Customer { get; set; }
+        public string RecapCredsSetUsed { get; set; }
+        public string RecapInventoryUsed { get; set; }
+        public string RecapInventoryLeft { get; set; }
         public string CrossCheckedBy { get; set; }
         public string Technician { get; set; }
         public bool IsHardwareRecap => !string.IsNullOrWhiteSpace(RecapStoreLocation);
